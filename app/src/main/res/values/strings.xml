@@ -2,7 +2,6 @@
 <resources>
 
     <string name="app_name">GeoMiner Transcripts</string>
-    <string name="recognize_file">Recognize File</string>
     <string name="recognize_microphone">Recognize Microphone</string>
     <string name="stop_microphone">Stop Microphone</string>
     <string name="preparing">Preparing the recognizer\n</string>
