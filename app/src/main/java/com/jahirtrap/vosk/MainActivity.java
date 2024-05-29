@@ -19,14 +19,18 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.view.View;
 import android.widget.Button;
+import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import org.json.JSONObject;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
 import org.vosk.Model;
@@ -38,8 +42,7 @@ import org.vosk.android.StorageService;
 
 import java.io.IOException;
 
-public class MainActivity extends Activity implements
-        RecognitionListener {
+public class MainActivity extends Activity implements RecognitionListener {
 
     static private final int STATE_START = 0;
     static private final int STATE_READY = 1;
@@ -50,9 +53,13 @@ public class MainActivity extends Activity implements
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
 
     private Model model;
+
+    private ProgressBar progressBar;
     private SpeechService speechService;
     private SpeechStreamService speechStreamService;
     private TextView resultView;
+    private String resultP = "";
+    private String result = "";
 
     @Override
     public void onCreate(Bundle state) {
@@ -60,6 +67,7 @@ public class MainActivity extends Activity implements
         setContentView(R.layout.main);
 
         // Setup layout
+        progressBar = findViewById(R.id.progress_bar);
         resultView = findViewById(R.id.result_text);
         setUiState(STATE_START);
 
@@ -83,9 +91,8 @@ public class MainActivity extends Activity implements
                     this.model = model;
                     setUiState(STATE_READY);
                 },
-                (exception) -> setErrorState("Failed to unpack the model" + exception.getMessage()));
+                (exception) -> setErrorState(R.string.failed + ": " + exception.getMessage()));
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode,
@@ -119,12 +126,22 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onResult(String hypothesis) {
-        resultView.append(hypothesis + "\n");
+        try {
+            JSONObject json = new JSONObject(hypothesis);
+            if (json.has("text") && !json.get("text").toString().isEmpty()) {
+                result += (json.getString("text") + " ");
+                resultP = result;
+                resultView.setText(resultP);
+            }
+        } catch (Exception e) {
+            e.fillInStackTrace();
+        }
     }
 
     @Override
     public void onFinalResult(String hypothesis) {
-        resultView.append(hypothesis + "\n");
+        result = resultP.substring(0, resultP.length() - 1) + "\n";
+        resultView.setText(result);
         setUiState(STATE_DONE);
         if (speechStreamService != null) {
             speechStreamService = null;
@@ -133,7 +150,15 @@ public class MainActivity extends Activity implements
 
     @Override
     public void onPartialResult(String hypothesis) {
-        resultView.append(hypothesis + "\n");
+        try {
+            JSONObject json = new JSONObject(hypothesis);
+            if (json.has("partial") && !json.get("partial").toString().isEmpty()) {
+                resultP = (result + json.getString("partial") + " ");
+                resultView.setText(resultP);
+            }
+        } catch (Exception e) {
+            e.fillInStackTrace();
+        }
     }
 
     @Override
@@ -149,13 +174,13 @@ public class MainActivity extends Activity implements
     private void setUiState(int state) {
         switch (state) {
             case STATE_START:
-                resultView.setText(R.string.preparing);
+                progressBar.setVisibility(View.VISIBLE);
                 resultView.setMovementMethod(new ScrollingMovementMethod());
                 findViewById(R.id.recognize_mic).setEnabled(false);
                 findViewById(R.id.pause).setEnabled((false));
                 break;
             case STATE_READY:
-                resultView.setText(R.string.ready);
+                progressBar.setVisibility(View.GONE);
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
                 findViewById(R.id.recognize_mic).setEnabled(true);
                 findViewById(R.id.pause).setEnabled((false));
@@ -168,7 +193,7 @@ public class MainActivity extends Activity implements
                 break;
             case STATE_MIC:
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.stop_microphone);
-                resultView.setText(getString(R.string.say_something));
+                Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
                 findViewById(R.id.recognize_mic).setEnabled(true);
                 findViewById(R.id.pause).setEnabled((true));
                 break;
@@ -178,7 +203,7 @@ public class MainActivity extends Activity implements
     }
 
     private void setErrorState(String message) {
-        resultView.setText(message);
+        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
         ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
         findViewById(R.id.recognize_mic).setEnabled(false);
     }
@@ -199,7 +224,6 @@ public class MainActivity extends Activity implements
             }
         }
     }
-
 
     private void pause(boolean checked) {
         if (speechService != null) {
