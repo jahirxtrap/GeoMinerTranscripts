@@ -15,7 +15,6 @@
 package com.jahirtrap.vosk;
 
 import android.Manifest;
-import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -27,6 +26,7 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
@@ -42,7 +42,7 @@ import org.vosk.android.StorageService;
 
 import java.io.IOException;
 
-public class MainActivity extends Activity implements RecognitionListener {
+public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
     static private final int STATE_START = 0;
     static private final int STATE_READY = 1;
@@ -230,5 +230,4 @@ public class MainActivity extends Activity implements RecognitionListener {
             speechService.setPause(checked);
         }
     }
-
 }
