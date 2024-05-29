@@ -8,4 +8,8 @@
     <string name="pause">Pausar</string>
     <string name="continue_recognition">Continuar</string>
     <string name="result_text">Texto detectado</string>
+    <string name="copy">Copiar</string>
+    <string name="clear">Borrar todo</string>
+    <string name="About">Acerca de</string>
+    <string name="copied">Texto copiado al portapapeles</string>
 </resources>

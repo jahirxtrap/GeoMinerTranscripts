@@ -14,10 +14,18 @@
 
 package com.jahirtrap.vosk;
 
+import static com.jahirtrap.vosk.R.*;
+
 import android.Manifest;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ProgressBar;
@@ -111,6 +119,37 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getOrder()) {
+            case 100:
+                copyToClipboard(resultView.getText().toString());
+                return true;
+            case 101:
+                resultP = "";
+                result = "";
+                resultView.setText("");
+                return true;
+            case 102:
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void copyToClipboard(String text) {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Copied", text.trim());
+        clipboard.setPrimaryClip(clip);
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
 
@@ -153,7 +192,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onFinalResult(String hypothesis) {
-        result = !resultP.isEmpty() ? resultP.substring(0, resultP.length() - 1) + "\n" : resultP;
+        result = !resultP.isEmpty() ? resultP.substring(0, resultP.length() - 1) : resultP;
         resultView.setText(result);
         setUiState(STATE_DONE);
         if (speechStreamService != null) {
@@ -196,6 +235,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
                 findViewById(R.id.recognize_mic).setEnabled(true);
                 findViewById(R.id.pause).setEnabled((true));
+                result = !result.isEmpty() ? result + "\n" : result;
+                resultView.setText(result);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + state);
