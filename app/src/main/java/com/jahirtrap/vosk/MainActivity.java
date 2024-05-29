@@ -125,6 +125,19 @@ public class MainActivity extends Activity implements RecognitionListener {
     }
 
     @Override
+    public void onPartialResult(String hypothesis) {
+        try {
+            JSONObject json = new JSONObject(hypothesis);
+            if (json.has("partial") && !json.get("partial").toString().isEmpty()) {
+                resultP = (result + json.getString("partial") + " ");
+                resultView.setText(resultP);
+            }
+        } catch (Exception e) {
+            e.fillInStackTrace();
+        }
+    }
+
+    @Override
     public void onResult(String hypothesis) {
         try {
             JSONObject json = new JSONObject(hypothesis);
@@ -140,24 +153,11 @@ public class MainActivity extends Activity implements RecognitionListener {
 
     @Override
     public void onFinalResult(String hypothesis) {
-        result = resultP.substring(0, resultP.length() - 1) + "\n";
+        result = !resultP.isEmpty() ? resultP.substring(0, resultP.length() - 1) + "\n" : resultP;
         resultView.setText(result);
         setUiState(STATE_DONE);
         if (speechStreamService != null) {
             speechStreamService = null;
-        }
-    }
-
-    @Override
-    public void onPartialResult(String hypothesis) {
-        try {
-            JSONObject json = new JSONObject(hypothesis);
-            if (json.has("partial") && !json.get("partial").toString().isEmpty()) {
-                resultP = (result + json.getString("partial") + " ");
-                resultView.setText(resultP);
-            }
-        } catch (Exception e) {
-            e.fillInStackTrace();
         }
     }
 

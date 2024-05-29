@@ -1,5 +1,7 @@
 apply plugin: 'com.android.application'
 
+version = "1.2.1"
+
 android {
     namespace "com.jahirtrap.vosk"
     compileSdkVersion 34
@@ -8,7 +10,7 @@ android {
         minSdkVersion 21
         targetSdkVersion 34
         versionCode 1
-        versionName "1.2.0"
+        versionName version
         ndkVersion = "25.2.9519653"
         ndk {
             abiFilters 'armeabi-v7a', 'arm64-v8a', 'x86_64', 'x86'
@@ -18,6 +20,15 @@ android {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            applicationVariants.all { variant ->
+                variant.outputs.all { output ->
+                    def apkFile = output.outputFile
+                    if (apkFile != null && apkFile.name.endsWith('.apk')) {
+                        def newApkName = "GeoMinerTranscripts-${version}.apk"
+                        outputFileName = newApkName
+                    }
+                }
+            }
         }
     }
     compileOptions {

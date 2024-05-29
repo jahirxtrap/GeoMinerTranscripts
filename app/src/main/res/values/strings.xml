@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
     <string name="app_name">GeoMiner Transcripts</string>
     <string name="recognize_microphone">Grabar</string>
     <string name="recording">Grabando...</string>
@@ -9,5 +8,4 @@
     <string name="pause">Pausar</string>
     <string name="continue_recognition">Continuar</string>
     <string name="result_text">Texto detectado</string>
-
 </resources>
