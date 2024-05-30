@@ -30,7 +30,6 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.ToggleButton;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -67,6 +66,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private TextView resultView;
     private String resultP = "";
     private String result = "";
+    private boolean isPaused = false;
 
     @Override
     public void onCreate(Bundle state) {
@@ -79,7 +79,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         setUiState(STATE_START);
 
         findViewById(R.id.recognize_mic).setOnClickListener(view -> recognizeMicrophone());
-        ((ToggleButton) findViewById(R.id.pause)).setOnCheckedChangeListener((view, isChecked) -> pause(isChecked));
+        findViewById(R.id.pause).setOnClickListener(view -> togglePause());
 
         LibVosk.setLogLevel(LogLevel.INFO);
 
@@ -218,25 +218,26 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 progressBar.setVisibility(View.VISIBLE);
                 resultView.setMovementMethod(new ScrollingMovementMethod());
                 findViewById(R.id.recognize_mic).setEnabled(false);
-                findViewById(R.id.pause).setEnabled((false));
+                findViewById(R.id.pause).setEnabled(false);
                 break;
             case STATE_READY:
                 progressBar.setVisibility(View.GONE);
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
                 findViewById(R.id.recognize_mic).setEnabled(true);
-                findViewById(R.id.pause).setEnabled((false));
+                findViewById(R.id.pause).setEnabled(false);
                 break;
             case STATE_DONE:
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
                 findViewById(R.id.recognize_mic).setEnabled(true);
-                findViewById(R.id.pause).setEnabled((false));
-                ((ToggleButton) findViewById(R.id.pause)).setChecked(false);
+                findViewById(R.id.pause).setEnabled(false);
+                isPaused = false;
+                ((Button) findViewById(R.id.pause)).setText(R.string.pause);
                 break;
             case STATE_MIC:
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.stop_microphone);
                 Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
                 findViewById(R.id.recognize_mic).setEnabled(true);
-                findViewById(R.id.pause).setEnabled((true));
+                findViewById(R.id.pause).setEnabled(true);
                 result = !result.isEmpty() ? result + "\n" : result;
                 resultView.setText(result);
                 break;
@@ -268,9 +269,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
-    private void pause(boolean checked) {
+    private void togglePause() {
         if (speechService != null) {
-            speechService.setPause(checked);
+            isPaused = !isPaused;
+            speechService.setPause(isPaused);
+            ((Button) findViewById(R.id.pause)).setText(isPaused ? R.string.continue_recognition : R.string.pause);
         }
     }
 }
