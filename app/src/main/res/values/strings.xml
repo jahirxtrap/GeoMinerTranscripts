@@ -2,7 +2,6 @@
 <resources>
     <string name="app_name">GeoMiner Transcripts</string>
     <string name="recognize_microphone">Grabar</string>
-    <string name="recording">Grabando...</string>
     <string name="stop_microphone">Detener</string>
     <string name="failed">Carga fallida</string>
     <string name="pause">Pausar</string>
@@ -11,5 +10,4 @@
     <string name="copy">Copiar</string>
     <string name="clear">Borrar todo</string>
     <string name="About">Acerca de</string>
-    <string name="copied">Texto copiado al portapapeles</string>
 </resources>

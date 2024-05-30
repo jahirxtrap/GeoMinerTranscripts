@@ -7,7 +7,6 @@
 
     <ProgressBar
         android:id="@+id/progress_bar"
-        style="?android:attr/progressBarStyle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
@@ -20,8 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"
-        android:background="?attr/colorSurfaceContainerLowest"
-        app:layout_constraintBottom_toTopOf="@id/button_container"
+        app:layout_constraintBottom_toTopOf="@id/visualizer"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -37,6 +35,15 @@
             android:textAppearance="?android:attr/textAppearanceMedium"
             android:textIsSelectable="true" />
     </ScrollView>
+
+    <com.jahirtrap.vosk.AudioVisualizerView
+        android:id="@+id/visualizer"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_marginBottom="16dp"
+        android:background="@drawable/visualizer"
+        app:line_color="?attr/colorSecondary"
+        app:layout_constraintBottom_toTopOf="@id/button_container" />
 
     <LinearLayout
         android:id="@+id/button_container"

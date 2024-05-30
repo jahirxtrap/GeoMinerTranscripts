@@ -1,17 +1,3 @@
-// Copyright 2019 Alpha Cephei Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//       http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package com.jahirtrap.vosk;
 
 import android.Manifest;
@@ -20,6 +6,9 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
@@ -34,7 +23,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import org.json.JSONObject;
 import org.vosk.LibVosk;
@@ -64,9 +52,14 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private SpeechService speechService;
     private SpeechStreamService speechStreamService;
     private TextView resultView;
+    private AudioVisualizerView audioVisualizerView;
     private String resultP = "";
     private String result = "";
     private boolean isPaused = false;
+
+    private AudioRecord audioRecord;
+    private boolean isRecording = false;
+    private Thread recordingThread;
 
     @Override
     public void onCreate(Bundle state) {
@@ -76,6 +69,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         // Setup layout
         progressBar = findViewById(R.id.progress_bar);
         resultView = findViewById(R.id.result_text);
+        audioVisualizerView = findViewById(R.id.visualizer);
         setUiState(STATE_START);
 
         findViewById(R.id.recognize_mic).setOnClickListener(view -> recognizeMicrophone());
@@ -83,9 +77,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         LibVosk.setLogLevel(LogLevel.INFO);
 
-        // Check if user has given permission to record audio, init the model after permission is granted
-        int permissionCheck = ContextCompat.checkSelfPermission(getApplicationContext(), Manifest.permission.RECORD_AUDIO);
-        if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
         } else {
             initModel();
@@ -108,8 +100,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Recognizer initialization is a time-consuming and it involves IO,
-                // so we execute it in async task
                 initModel();
             } else {
                 finish();
@@ -132,6 +122,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 if (!text.isEmpty()) copyToClipboard(text);
                 return true;
             case 101:
+                if (speechService != null) {
+                    setUiState(STATE_DONE);
+                    speechService.stop();
+                    speechService = null;
+                }
                 resultP = "";
                 result = "";
                 resultView.setText("");
@@ -227,6 +222,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 findViewById(R.id.pause).setEnabled(false);
                 break;
             case STATE_DONE:
+                stopRecording();
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
                 findViewById(R.id.recognize_mic).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(false);
@@ -234,8 +230,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 ((Button) findViewById(R.id.pause)).setText(R.string.pause);
                 break;
             case STATE_MIC:
+                startRecording();
                 ((Button) findViewById(R.id.recognize_mic)).setText(R.string.stop_microphone);
-                Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
                 findViewById(R.id.recognize_mic).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(true);
                 result = !result.isEmpty() ? result + "\n" : result;
@@ -273,7 +269,55 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         if (speechService != null) {
             isPaused = !isPaused;
             speechService.setPause(isPaused);
+            if (isPaused) stopRecording();
+            else startRecording();
             ((Button) findViewById(R.id.pause)).setText(isPaused ? R.string.continue_recognition : R.string.pause);
         }
+    }
+
+    private void startRecording() {
+        int sampleRate = 16000;
+        int bufferSize = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.RECORD_AUDIO}, PERMISSIONS_REQUEST_RECORD_AUDIO);
+        } else {
+            audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
+        }
+
+        audioRecord.startRecording();
+        isRecording = true;
+
+        recordingThread = new Thread(() -> {
+            short[] buffer = new short[bufferSize];
+            while (isRecording) {
+                int read = audioRecord.read(buffer, 0, buffer.length);
+                if (read > 0) {
+                    float amplitude = calculateAmplitude(buffer, read);
+                    runOnUiThread(() -> audioVisualizerView.addAmplitude(amplitude));
+                }
+            }
+        });
+
+        recordingThread.start();
+    }
+
+    private void stopRecording() {
+        if (audioRecord != null) {
+            isRecording = false;
+            audioRecord.stop();
+            audioRecord.release();
+            audioRecord = null;
+            recordingThread = null;
+        }
+    }
+
+    private float calculateAmplitude(short[] buffer, int read) {
+        float sum = 0;
+        for (int i = 0; i < read; i++) {
+            sum += Math.abs(buffer[i]);
+        }
+        return sum / read;
     }
 }
