@@ -2,9 +2,9 @@ apply plugin: 'com.android.library'
 
 android {
     namespace "org.vosk.models"
-    compileSdkVersion 34
+    compileSdk 34
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 27
         targetSdkVersion 34
     }
     buildFeatures {

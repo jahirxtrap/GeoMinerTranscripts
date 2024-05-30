@@ -14,12 +14,11 @@
 
 package com.jahirtrap.vosk;
 
-import static com.jahirtrap.vosk.R.*;
-
 import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
@@ -129,7 +128,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getOrder()) {
             case 100:
-                copyToClipboard(resultView.getText().toString());
+                String text = resultView.getText().toString().trim();
+                if (!text.isEmpty()) copyToClipboard(text);
                 return true;
             case 101:
                 resultP = "";
@@ -137,6 +137,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 resultView.setText("");
                 return true;
             case 102:
+                Intent intent = new Intent(this, AboutActivity.class);
+                startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -145,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private void copyToClipboard(String text) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("Copied", text.trim());
+        ClipData clip = ClipData.newPlainText("Copied", text);
         clipboard.setPrimaryClip(clip);
     }
 
