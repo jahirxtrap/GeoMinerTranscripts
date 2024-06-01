@@ -43,6 +43,7 @@
         android:layout_marginBottom="16dp"
         android:background="@drawable/visualizer"
         app:line_color="?attr/colorSecondary"
+        app:corner_radius="16dp"
         app:layout_constraintBottom_toTopOf="@id/button_container" />
 
     <LinearLayout

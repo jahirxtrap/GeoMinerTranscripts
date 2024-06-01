@@ -2,5 +2,6 @@
 <resources>
     <declare-styleable name="visualizer">
         <attr name="line_color" format="color" />
+        <attr name="corner_radius" format="dimension" />
     </declare-styleable>
 </resources>

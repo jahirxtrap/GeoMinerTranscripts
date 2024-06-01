@@ -7,6 +7,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
+import android.view.ViewOutlineProvider;
+import android.graphics.Outline;
 
 import androidx.annotation.NonNull;
 
@@ -19,6 +21,7 @@ public class AudioVisualizerView extends View {
     private static final float SCALE_FACTOR = 4000.0f;
     private static final float MIN_AMPLITUDE = 120.0f;
     private Paint linePaint;
+    private float cornerRadius;
     private List<Float> amplitudes;
 
     public AudioVisualizerView(Context context) {
@@ -44,15 +47,19 @@ public class AudioVisualizerView extends View {
             TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.visualizer, 0, 0);
             try {
                 int lineColor = a.getColor(R.styleable.visualizer_line_color, Color.WHITE);
+                cornerRadius = a.getDimension(R.styleable.visualizer_corner_radius, 16 * getResources().getDisplayMetrics().density);
                 linePaint.setColor(lineColor);
             } finally {
                 a.recycle();
             }
         } else {
             linePaint.setColor(Color.WHITE);
+            cornerRadius = 16 * getResources().getDisplayMetrics().density;
         }
 
         linePaint.setStrokeWidth(LINE_WIDTH);
+        setOutlineProvider(new CustomOutlineProvider());
+        setClipToOutline(true);
     }
 
     @Override
@@ -94,5 +101,12 @@ public class AudioVisualizerView extends View {
     public void clear() {
         amplitudes.clear();
         invalidate();
+    }
+
+    private class CustomOutlineProvider extends ViewOutlineProvider {
+        @Override
+        public void getOutline(View view, Outline outline) {
+            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius);
+        }
     }
 }
