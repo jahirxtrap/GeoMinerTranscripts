@@ -25,15 +25,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="1.0">
 
-        <TextView
-            android:id="@+id/result_text"
+        <LinearLayout
+            android:id="@+id/form_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/result_text"
-            android:gravity="bottom"
-            android:scrollbars="vertical"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textIsSelectable="true" />
+            android:contentDescription="@string/result"
+            android:orientation="vertical" />
     </ScrollView>
 
     <com.jahirtrap.vosk.AudioVisualizerView
@@ -56,11 +53,11 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <Button
-            android:id="@+id/recognize_mic"
+            android:id="@+id/record"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/recognize_microphone"
+            android:text="@string/record"
             android:textAllCaps="true" />
 
         <Space

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">GeoMiner Transcripts</string>
-    <string name="recognize_microphone">Grabar</string>
-    <string name="stop_microphone">Detener</string>
+    <string name="app_name" translatable="false">GEO Voice Transcriptor</string>
+    <string name="record">Grabar</string>
+    <string name="stop">Detener</string>
+    <string name="recording">Grabando…</string>
     <string name="failed">Carga fallida</string>
     <string name="pause">Pausar</string>
-    <string name="continue_recognition">Continuar</string>
-    <string name="result_text">Texto detectado</string>
-    <string name="copy">Copiar</string>
-    <string name="clear">Borrar todo</string>
+    <string name="resume">Continuar</string>
+    <string name="result">Resultado</string>
+    <string name="copy_text">Copiar</string>
+    <string name="clear_all">Borrar todo</string>
+    <string name="load_template">Cargar plantilla</string>
+    <string name="settings">Configuraciones</string>
     <string name="About">Acerca de</string>
 </resources>

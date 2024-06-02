@@ -4,11 +4,11 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Outline;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;
-import android.graphics.Outline;
 
 import androidx.annotation.NonNull;
 
@@ -46,15 +46,15 @@ public class AudioVisualizerView extends View {
         if (attrs != null) {
             TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.visualizer, 0, 0);
             try {
-                int lineColor = a.getColor(R.styleable.visualizer_line_color, Color.WHITE);
-                cornerRadius = a.getDimension(R.styleable.visualizer_corner_radius, 16 * getResources().getDisplayMetrics().density);
+                int lineColor = a.getColor(R.styleable.visualizer_line_color, Color.CYAN);
+                cornerRadius = a.getDimension(R.styleable.visualizer_corner_radius, 0);
                 linePaint.setColor(lineColor);
             } finally {
                 a.recycle();
             }
         } else {
-            linePaint.setColor(Color.WHITE);
-            cornerRadius = 16 * getResources().getDisplayMetrics().density;
+            linePaint.setColor(Color.CYAN);
+            cornerRadius = 0;
         }
 
         linePaint.setStrokeWidth(LINE_WIDTH);
@@ -76,7 +76,7 @@ public class AudioVisualizerView extends View {
 
         for (int i = 0; i < numLines; i++) {
             int index = amplitudes.size() - numLines + i;
-            if (index < 0) continue;
+            if (index < 1) continue;
 
             float amplitude = amplitudes.get(index);
             amplitude = Math.max(amplitude, MIN_AMPLITUDE);

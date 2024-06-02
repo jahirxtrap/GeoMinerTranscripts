@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.preference.PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <ListPreference
+        android:key="theme_preference"
+        android:title="Tema de la app"
+        android:summary="Seleccionar el tema de la aplicación"
+        android:defaultValue="system"
+        android:entries="@array/theme_options"
+        android:entryValues="@array/theme_values"
+        android:icon="@android:drawable/ic_menu_edit" />
+
+    <SwitchPreferenceCompat
+        android:key="visualizer_switch"
+        android:title="Activar el visualizador"
+        android:summary="Activar o desactivar el visualizador de audio"
+        android:defaultValue="true"
+        android:icon="@android:drawable/ic_menu_view" />
+</androidx.preference.PreferenceScreen>

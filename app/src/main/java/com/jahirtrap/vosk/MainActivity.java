@@ -5,25 +5,30 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.os.Bundle;
-import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
+import androidx.preference.PreferenceManager;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
@@ -35,6 +40,9 @@ import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
@@ -51,15 +59,17 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private ProgressBar progressBar;
     private SpeechService speechService;
     private SpeechStreamService speechStreamService;
-    private TextView resultView;
-    private AudioVisualizerView audioVisualizerView;
+    private LinearLayout formContainer;
+    private AudioVisualizerView visualizer;
     private String resultP = "";
     private String result = "";
     private boolean isPaused = false;
-
     private AudioRecord audioRecord;
     private boolean isRecording = false;
     private Thread recordingThread;
+    private SharedPreferences preferences;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
+    private EditText firstEditText;
 
     @Override
     public void onCreate(Bundle state) {
@@ -68,11 +78,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         // Setup layout
         progressBar = findViewById(R.id.progress_bar);
-        resultView = findViewById(R.id.result_text);
-        audioVisualizerView = findViewById(R.id.visualizer);
+        formContainer = findViewById(R.id.form_container);
+        visualizer = findViewById(R.id.visualizer);
         setUiState(STATE_START);
 
-        findViewById(R.id.recognize_mic).setOnClickListener(view -> recognizeMicrophone());
+        // Load preferences
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        setAppTheme(preferences.getString("theme_preference", "system"));
+        visualizer.setVisibility(preferences.getBoolean("visualizer_switch", true) ? View.VISIBLE : View.GONE);
+
+        findViewById(R.id.record).setOnClickListener(view -> recognizeMicrophone());
         findViewById(R.id.pause).setOnClickListener(view -> togglePause());
 
         LibVosk.setLogLevel(LogLevel.INFO);
@@ -82,6 +97,29 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         } else {
             initModel();
         }
+
+        // Load default template
+        generateForm("default.json");
+
+        // Preferences listener
+        preferenceChangeListener = (sharedPrefs, key) -> {
+            if (key == null) return;
+            if (key.equals("theme_preference")) {
+                recreate();
+            } else if (key.equals("visualizer_switch")) {
+                boolean enabled = sharedPrefs.getBoolean(key, true);
+                if (visualizer != null) {
+                    if (speechService != null) {
+                        setUiState(STATE_DONE);
+                        speechService.stop();
+                        speechService = null;
+                    }
+                    visualizer.clear();
+                    visualizer.setVisibility(enabled ? View.VISIBLE : View.GONE);
+                }
+            }
+        };
+        preferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
     }
 
     private void initModel() {
@@ -91,6 +129,20 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     setUiState(STATE_READY);
                 },
                 (exception) -> setErrorState(R.string.failed + ": " + exception.getMessage()));
+    }
+
+    private void setAppTheme(String themePreference) {
+        switch (themePreference) {
+            case "light":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+                break;
+            case "dark":
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
+                break;
+            default:
+                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+                break;
+        }
     }
 
     @Override
@@ -116,28 +168,41 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Intent intent;
         switch (item.getOrder()) {
             case 100:
-                String text = resultView.getText().toString().trim();
+                String text = firstEditText.getText().toString().trim();
                 if (!text.isEmpty()) copyToClipboard(text);
                 return true;
             case 101:
-                if (speechService != null) {
-                    setUiState(STATE_DONE);
-                    speechService.stop();
-                    speechService = null;
-                }
-                resultP = "";
-                result = "";
-                resultView.setText("");
+                clear();
                 return true;
             case 102:
-                Intent intent = new Intent(this, AboutActivity.class);
+                clear();
+                generateForm("template.json");
+                return true;
+            case 103:
+                intent = new Intent(this, SettingsActivity.class);
+                startActivity(intent);
+                return true;
+            case 104:
+                intent = new Intent(this, AboutActivity.class);
                 startActivity(intent);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void clear() {
+        if (speechService != null) {
+            setUiState(STATE_DONE);
+            speechService.stop();
+            speechService = null;
+        }
+        resultP = "";
+        result = "";
+        firstEditText.setText("");
     }
 
     private void copyToClipboard(String text) {
@@ -166,7 +231,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             JSONObject json = new JSONObject(hypothesis);
             if (json.has("partial") && !json.get("partial").toString().isEmpty()) {
                 resultP = (result + json.getString("partial") + " ");
-                resultView.setText(resultP);
+                if (firstEditText != null) {
+                    firstEditText.setText(resultP);
+                }
             }
         } catch (Exception e) {
             e.fillInStackTrace();
@@ -180,7 +247,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             if (json.has("text") && !json.get("text").toString().isEmpty()) {
                 result += (json.getString("text") + " ");
                 resultP = result;
-                resultView.setText(resultP);
+                if (firstEditText != null) {
+                    firstEditText.setText(resultP);
+                }
             }
         } catch (Exception e) {
             e.fillInStackTrace();
@@ -190,7 +259,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onFinalResult(String hypothesis) {
         result = !resultP.isEmpty() ? resultP.substring(0, resultP.length() - 1) : resultP;
-        resultView.setText(result);
+        if (firstEditText != null) {
+            firstEditText.setText(result);
+        }
         setUiState(STATE_DONE);
         if (speechStreamService != null) {
             speechStreamService = null;
@@ -211,31 +282,31 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         switch (state) {
             case STATE_START:
                 progressBar.setVisibility(View.VISIBLE);
-                resultView.setMovementMethod(new ScrollingMovementMethod());
-                findViewById(R.id.recognize_mic).setEnabled(false);
+                findViewById(R.id.record).setEnabled(false);
                 findViewById(R.id.pause).setEnabled(false);
                 break;
             case STATE_READY:
                 progressBar.setVisibility(View.GONE);
-                ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
-                findViewById(R.id.recognize_mic).setEnabled(true);
+                ((Button) findViewById(R.id.record)).setText(R.string.record);
+                findViewById(R.id.record).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(false);
                 break;
             case STATE_DONE:
                 stopRecording();
-                ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
-                findViewById(R.id.recognize_mic).setEnabled(true);
+                ((Button) findViewById(R.id.record)).setText(R.string.record);
+                findViewById(R.id.record).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(false);
                 isPaused = false;
                 ((Button) findViewById(R.id.pause)).setText(R.string.pause);
                 break;
             case STATE_MIC:
                 startRecording();
-                ((Button) findViewById(R.id.recognize_mic)).setText(R.string.stop_microphone);
-                findViewById(R.id.recognize_mic).setEnabled(true);
+                ((Button) findViewById(R.id.record)).setText(R.string.stop);
+                if (!preferences.getBoolean("visualizer_switch", true))
+                    Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
+                findViewById(R.id.record).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(true);
                 result = !result.isEmpty() ? result + "\n" : result;
-                resultView.setText(result);
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + state);
@@ -244,8 +315,50 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private void setErrorState(String message) {
         Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
-        ((Button) findViewById(R.id.recognize_mic)).setText(R.string.recognize_microphone);
-        findViewById(R.id.recognize_mic).setEnabled(false);
+        ((Button) findViewById(R.id.record)).setText(R.string.record);
+        findViewById(R.id.record).setEnabled(false);
+    }
+
+    private void generateForm(String filename) {
+        JSONObject jsonObject = loadTemplate("templates/" + filename);
+        if (jsonObject == null) {
+            jsonObject = loadTemplate("templates/default.json");
+            if (jsonObject == null) return;
+        }
+
+        formContainer.removeAllViews();
+        firstEditText = null;
+
+        try {
+            String label = jsonObject.getString("label");
+            JSONObject data = jsonObject.getJSONObject("data");
+
+            TextView labelView = new TextView(this);
+            labelView.setText(label);
+            labelView.setTextSize(20);
+            formContainer.addView(labelView);
+
+            for (Iterator<String> it = data.keys(); it.hasNext(); ) {
+                String key = it.next();
+                EditText editText = new EditText(this);
+                editText.setHint(key);
+                editText.setId(View.generateViewId());
+                if (firstEditText == null) firstEditText = editText;
+                formContainer.addView(editText);
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private JSONObject loadTemplate(String path) {
+        try (InputStream is = getAssets().open(path)) {
+            byte[] buffer = new byte[is.available()];
+            is.read(buffer);
+            return new JSONObject(new String(buffer, StandardCharsets.UTF_8));
+        } catch (IOException | JSONException ex) {
+            return null;
+        }
     }
 
     private void recognizeMicrophone() {
@@ -271,11 +384,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             speechService.setPause(isPaused);
             if (isPaused) stopRecording();
             else startRecording();
-            ((Button) findViewById(R.id.pause)).setText(isPaused ? R.string.continue_recognition : R.string.pause);
+            ((Button) findViewById(R.id.pause)).setText(isPaused ? R.string.resume : R.string.pause);
         }
     }
 
     private void startRecording() {
+        if (!preferences.getBoolean("visualizer_switch", true)) return;
         int sampleRate = 16000;
         int bufferSize = AudioRecord.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_IN_DEFAULT, AudioFormat.ENCODING_PCM_16BIT);
 
@@ -295,7 +409,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 int read = audioRecord.read(buffer, 0, buffer.length);
                 if (read > 0) {
                     float amplitude = calculateAmplitude(buffer, read);
-                    runOnUiThread(() -> audioVisualizerView.addAmplitude(amplitude));
+                    runOnUiThread(() -> visualizer.addAmplitude(amplitude));
                 }
             }
         });
@@ -304,6 +418,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private void stopRecording() {
+        if (!preferences.getBoolean("visualizer_switch", true)) return;
         if (audioRecord != null) {
             isRecording = false;
             audioRecord.stop();

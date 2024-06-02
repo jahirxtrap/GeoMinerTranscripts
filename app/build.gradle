@@ -1,6 +1,6 @@
 apply plugin: 'com.android.application'
 
-version = "1.2.3"
+version = "1.2.4"
 
 android {
     namespace "com.jahirtrap.vosk"
@@ -24,7 +24,7 @@ android {
                 variant.outputs.all { output ->
                     def apkFile = output.outputFile
                     if (apkFile != null && apkFile.name.endsWith('.apk')) {
-                        def newApkName = "GeoMinerTranscripts-${version}.apk"
+                        def newApkName = "GEOVoiceTranscriptor-${version}.apk"
                         outputFileName = newApkName
                     }
                 }
@@ -38,10 +38,10 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'net.java.dev.jna:jna:5.13.0@aar'
     implementation 'com.alphacephei:vosk-android:0.3.47@aar'
     implementation project(':models')
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.preference:preference:1.2.1'
     implementation 'com.google.android.material:material:1.12.0'
 }
