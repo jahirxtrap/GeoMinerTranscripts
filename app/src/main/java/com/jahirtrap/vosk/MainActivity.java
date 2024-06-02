@@ -68,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private boolean isRecording = false;
     private Thread recordingThread;
     private SharedPreferences preferences;
-    private SharedPreferences.OnSharedPreferenceChangeListener preferenceChangeListener;
+    private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     private EditText firstEditText;
 
     @Override
@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         generateForm("default.json");
 
         // Preferences listener
-        preferenceChangeListener = (sharedPrefs, key) -> {
+        preferenceListener = (sharedPrefs, key) -> {
             if (key == null) return;
             if (key.equals("theme_preference")) {
                 recreate();
@@ -119,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 }
             }
         };
-        preferences.registerOnSharedPreferenceChangeListener(preferenceChangeListener);
+        preferences.registerOnSharedPreferenceChangeListener(preferenceListener);
     }
 
     private void initModel() {
@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 formContainer.addView(editText);
             }
         } catch (JSONException e) {
-            e.printStackTrace();
+            e.fillInStackTrace();
         }
     }
 

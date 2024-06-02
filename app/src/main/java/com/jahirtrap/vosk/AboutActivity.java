@@ -1,11 +1,18 @@
 package com.jahirtrap.vosk;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.Settings;
+import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 
 public class AboutActivity extends AppCompatActivity {
     @Override
@@ -17,26 +24,32 @@ public class AboutActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        TextView developerLink = findViewById(R.id.developer_link);
-        TextView repositoryLink = findViewById(R.id.repository_link);
-        TextView websiteLink = findViewById(R.id.website_link);
-        TextView creditsLink = findViewById(R.id.credits_link);
+        TextView versionText = findViewById(R.id.version_text);
+        ImageView profileImage = findViewById(R.id.profile_image);
+        Button appInfoButton = findViewById(R.id.app_info_button);
 
-        developerLink.setOnClickListener(v -> openLink("https://github.com/jahirxtrap"));
-        repositoryLink.setOnClickListener(v -> openLink("https://github.com/jahirxtrap/GeoVoiceTranscriptor"));
-        websiteLink.setOnClickListener(v -> openLink("https://diegofernandolojantn.github.io/GeoVoiceTranscriptorWeb/"));
-        creditsLink.setOnClickListener(v -> openLink("https://github.com/alphacep/vosk-android-demo"));
-    }
+        Glide.with(this)
+                .load(R.drawable.profile)
+                .transform(new CircleCrop())
+                .into(profileImage);
 
-    private void openLink(String url) {
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setData(Uri.parse(url));
-        startActivity(intent);
+        try {
+            versionText.setText(getString(R.string.version, getPackageManager().getPackageInfo(getPackageName(), 0).versionName));
+        } catch (PackageManager.NameNotFoundException e) {
+            e.fillInStackTrace();
+        }
+
+        appInfoButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            Uri uri = Uri.fromParts("package", getPackageName(), null);
+            intent.setData(uri);
+            startActivity(intent);
+        });
     }
 
     @Override
     public boolean onSupportNavigateUp() {
-        onBackPressed();
+        getOnBackPressedDispatcher().onBackPressed();
         return true;
     }
 }
