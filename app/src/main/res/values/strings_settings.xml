@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="theme_preference_title">Tema de la app</string>
+    <string name="theme_preference_summary">Tema seleccionado: %s</string>
+    <string name="visualizer_switch_title">Activar el visualizador</string>
+    <string name="visualizer_switch_summary">Visualizador: %1$s</string>
+    <string name="line_command_title">Comando de voz</string>
+    <string name="line_command_summary">Comando definido: %1$s</string>
+    <string name="reset_preferences_title">Valores predeterminados</string>
+    <string name="reset_preferences_alert_title">Reestablecer valores predeterminados</string>
+    <string name="reset_preferences_alert_message">¿Está seguro de que desea restablecer las configuraciones a sus valores predeterminados?</string>
+    <string name="on">Activado</string>
+    <string name="off">Desactivado</string>
+    <string name="yes">Si</string>
+    <string name="no">No</string>
+</resources>

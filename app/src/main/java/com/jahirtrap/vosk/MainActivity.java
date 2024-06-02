@@ -42,14 +42,17 @@ import org.vosk.android.StorageService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
 
-    static private final int STATE_START = 0;
-    static private final int STATE_READY = 1;
-    static private final int STATE_DONE = 2;
-    static private final int STATE_MIC = 3;
+    private static final int STATE_START = 0;
+    private static final int STATE_READY = 1;
+    private static final int STATE_DONE = 2;
+    private static final int STATE_MIC = 3;
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
     private Model model;
     private ProgressBar progressBar;
@@ -57,15 +60,17 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private SpeechStreamService speechStreamService;
     private LinearLayout formContainer;
     private AudioVisualizerView visualizer;
-    private String resultP = "";
-    private String result = "";
+    private ArrayList<String> resultP = new ArrayList<>();
+    private ArrayList<String> result = new ArrayList<>();
     private boolean isPaused = false;
     private AudioRecord audioRecord;
     private boolean isRecording = false;
     private Thread recordingThread;
     private SharedPreferences preferences;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
-    private EditText firstEditText;
+    private HashMap<String, EditText> editTextMap = new HashMap<>();
+    private EditText currentEditText;
+    private String lineCommand;
 
     @Override
     public void onCreate(Bundle state) {
@@ -83,6 +88,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         setAppTheme(preferences.getString("theme_preference", "system"));
         visualizer_container.setVisibility(preferences.getBoolean("visualizer_switch", true) ? View.VISIBLE : View.GONE);
+        lineCommand = preferences.getString("line_command_preference", "línea");
 
         findViewById(R.id.record).setOnClickListener(view -> recognizeMicrophone());
         findViewById(R.id.pause).setOnClickListener(view -> togglePause());
@@ -114,6 +120,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     visualizer.clear();
                     visualizer_container.setVisibility(enabled ? View.VISIBLE : View.GONE);
                 }
+            } else if (key.equals("line_command_preference")) {
+                lineCommand = sharedPrefs.getString(key, "línea");
             }
         };
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener);
@@ -168,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         Intent intent;
         switch (item.getOrder()) {
             case 100:
-                String text = firstEditText.getText().toString().trim();
+                String text = currentEditText.getText().toString().trim();
                 if (!text.isEmpty()) copyToClipboard(text);
                 return true;
             case 101:
@@ -197,9 +205,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             speechService.stop();
             speechService = null;
         }
-        resultP = "";
-        result = "";
-        firstEditText.setText("");
+        resultP.clear();
+        result.clear();
+        for (EditText editText : editTextMap.values()) {
+            editText.setText("");
+        }
     }
 
     private void copyToClipboard(String text) {
@@ -222,17 +232,36 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
+    private String normalizeString(String text) {
+        text = Normalizer.normalize(text, Normalizer.Form.NFD);
+        text = text.replaceAll("\\p{InCombiningDiacriticalMarks}", "");
+        return text.toLowerCase();
+    }
+
     @Override
     public void onPartialResult(String hypothesis) {
         try {
             JSONObject json = new JSONObject(hypothesis);
             if (json.has("partial") && !json.get("partial").toString().isEmpty()) {
-                resultP = (result + json.getString("partial") + " ");
-                if (firstEditText != null) {
-                    firstEditText.setText(resultP);
+                String text = json.getString("partial");
+                if (!text.trim().isEmpty()) {
+                    text = normalizeString(text);
+
+                    String normalizedLineCommand = normalizeString(lineCommand);
+                    if (text.equals(normalizedLineCommand) || text.startsWith(normalizedLineCommand + " ")) {
+                        String lineName = text.replace(normalizedLineCommand, "").trim();
+                        if (editTextMap.containsKey(lineName)) {
+                            currentEditText = editTextMap.get(lineName);
+                            Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        currentEditText.setText(String.format("%s%s ", currentEditText.getText().toString(), text));
+                        int index = editTextMap.values().toArray(new EditText[0]).length - 1;
+                        result.set(index, currentEditText.getText().toString());
+                    }
                 }
             }
-        } catch (Exception e) {
+        } catch (JSONException e) {
             e.fillInStackTrace();
         }
     }
@@ -242,26 +271,54 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         try {
             JSONObject json = new JSONObject(hypothesis);
             if (json.has("text") && !json.get("text").toString().isEmpty()) {
-                result += (json.getString("text") + " ");
-                resultP = result;
-                if (firstEditText != null) {
-                    firstEditText.setText(resultP);
+                String text = json.getString("text");
+                if (!text.trim().isEmpty()) {
+                    text = normalizeString(text);
+
+                    String normalizedLineCommand = normalizeString(lineCommand);
+                    if (text.equals(normalizedLineCommand) || text.startsWith(normalizedLineCommand + " ")) {
+                        String lineName = text.replace(normalizedLineCommand, "").trim();
+                        if (editTextMap.containsKey(lineName)) {
+                            currentEditText = editTextMap.get(lineName);
+                            Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        currentEditText.setText(String.format("%s%s ", currentEditText.getText().toString(), text));
+                        int index = editTextMap.values().toArray(new EditText[0]).length - 1;
+                        result.set(index, currentEditText.getText().toString());
+                    }
                 }
             }
-        } catch (Exception e) {
+        } catch (JSONException e) {
             e.fillInStackTrace();
         }
     }
 
     @Override
     public void onFinalResult(String hypothesis) {
-        result = !resultP.isEmpty() ? resultP.substring(0, resultP.length() - 1) : resultP;
-        if (firstEditText != null) {
-            firstEditText.setText(result);
-        }
-        setUiState(STATE_DONE);
-        if (speechStreamService != null) {
-            speechStreamService = null;
+        try {
+            JSONObject json = new JSONObject(hypothesis);
+            if (json.has("text") && !json.get("text").toString().isEmpty()) {
+                String text = json.getString("text");
+                if (!text.trim().isEmpty()) {
+                    text = normalizeString(text);
+
+                    String normalizedLineCommand = normalizeString(lineCommand);
+                    if (text.equals(normalizedLineCommand) || text.startsWith(normalizedLineCommand + " ")) {
+                        String lineName = text.replace(normalizedLineCommand, "").trim();
+                        if (editTextMap.containsKey(lineName)) {
+                            currentEditText = editTextMap.get(lineName);
+                            Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
+                        }
+                    } else {
+                        currentEditText.setText(String.format("%s%s ", currentEditText.getText().toString(), text));
+                        int index = editTextMap.values().toArray(new EditText[0]).length - 1;
+                        result.set(index, currentEditText.getText().toString());
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.fillInStackTrace();
         }
     }
 
@@ -303,7 +360,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
                 findViewById(R.id.record).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(true);
-                result = !result.isEmpty() ? result + "\n" : result;
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + state);
@@ -324,7 +380,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
 
         formContainer.removeAllViews();
-        firstEditText = null;
+        editTextMap.clear();
 
         try {
             String label = jsonObject.getString("label");
@@ -335,13 +391,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             labelView.setTextSize(20);
             formContainer.addView(labelView);
 
+            int index = 0;
             for (Iterator<String> it = data.keys(); it.hasNext(); ) {
                 String key = it.next();
                 EditText editText = new EditText(this);
                 editText.setHint(key);
                 editText.setId(View.generateViewId());
-                if (firstEditText == null) firstEditText = editText;
+                editTextMap.put(key.toLowerCase(), editText);
+                result.add("");
+                resultP.add("");
                 formContainer.addView(editText);
+                if (index == 0) currentEditText = editText;
+                index++;
             }
         } catch (JSONException e) {
             e.fillInStackTrace();
