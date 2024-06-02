@@ -12,5 +12,5 @@
     <string name="clear_all">Borrar todo</string>
     <string name="load_template">Cargar plantilla</string>
     <string name="settings">Configuraciones</string>
-    <string name="About">Acerca de</string>
+    <string name="about">Acerca de</string>
 </resources>

@@ -2,7 +2,7 @@
 <resources>
     <string name="description">Este proyecto está enfocado en la transcripción de voz a texto, adicionalmente con la capacidad de rellenar formularios personalizables.</string>
     <string name="version">Versión: %1$s</string>
-    <string name="developer">Developer: https://github.com/jahirxtrap</string>
+    <string name="developer">Desarrollador: https://github.com/jahirxtrap</string>
     <string name="repository">Repositorio: https://github.com/jahirxtrap/GeoVoiceTranscriptor</string>
     <string name="website">Página Web: https://diegofernandolojantn.github.io/GeoVoiceTranscriptorWeb/</string>
     <string name="credits">Créditos: https://github.com/alphacep/vosk-android-demo</string>

@@ -21,7 +21,6 @@ public class AudioVisualizerView extends View {
     private static final float SCALE_FACTOR = 4000.0f;
     private static final float MIN_AMPLITUDE = 120.0f;
     private Paint linePaint;
-    private float cornerRadius;
     private List<Float> amplitudes;
 
     public AudioVisualizerView(Context context) {
@@ -47,19 +46,15 @@ public class AudioVisualizerView extends View {
             TypedArray a = context.getTheme().obtainStyledAttributes(attrs, R.styleable.visualizer, 0, 0);
             try {
                 int lineColor = a.getColor(R.styleable.visualizer_line_color, Color.CYAN);
-                cornerRadius = a.getDimension(R.styleable.visualizer_corner_radius, 0);
                 linePaint.setColor(lineColor);
             } finally {
                 a.recycle();
             }
         } else {
             linePaint.setColor(Color.CYAN);
-            cornerRadius = 0;
         }
 
         linePaint.setStrokeWidth(LINE_WIDTH);
-        setOutlineProvider(new CustomOutlineProvider());
-        setClipToOutline(true);
     }
 
     @Override
@@ -101,12 +96,5 @@ public class AudioVisualizerView extends View {
     public void clear() {
         amplitudes.clear();
         invalidate();
-    }
-
-    private class CustomOutlineProvider extends ViewOutlineProvider {
-        @Override
-        public void getOutline(View view, Outline outline) {
-            outline.setRoundRect(0, 0, view.getWidth(), view.getHeight(), cornerRadius);
-        }
     }
 }

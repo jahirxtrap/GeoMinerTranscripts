@@ -19,7 +19,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/visualizer"
+        app:layout_constraintBottom_toTopOf="@id/visualizer_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -33,15 +33,21 @@
             android:orientation="vertical" />
     </ScrollView>
 
-    <com.jahirtrap.vosk.AudioVisualizerView
-        android:id="@+id/visualizer"
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/visualizer_container"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:background="@drawable/visualizer"
-        app:line_color="?attr/colorSecondary"
-        app:corner_radius="16dp"
-        app:layout_constraintBottom_toTopOf="@id/button_container" />
+        app:cardBackgroundColor="?attr/colorSurfaceContainerLowest"
+        app:cardCornerRadius="16dp"
+        app:layout_constraintBottom_toTopOf="@id/button_container">
+
+        <com.jahirtrap.vosk.AudioVisualizerView
+            android:id="@+id/visualizer"
+            android:layout_width="match_parent"
+            android:layout_height="60dp"
+            app:line_color="?attr/colorSecondary" />
+    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:id="@+id/button_container"

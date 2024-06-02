@@ -14,8 +14,9 @@
     <item
         android:id="@+id/action_load_template"
         android:title="@string/load_template"
+        android:icon="@android:drawable/ic_menu_upload"
         android:orderInCategory="102"
-        app:showAsAction="never" />
+        app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_settings"
         android:title="@string/settings"
@@ -23,7 +24,7 @@
         app:showAsAction="never" />
     <item
         android:id="@+id/action_about"
-        android:title="@string/About"
+        android:title="@string/about"
         android:orderInCategory="104"
         app:showAsAction="never" />
 </menu>

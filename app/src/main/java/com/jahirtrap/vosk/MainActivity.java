@@ -50,12 +50,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     static private final int STATE_READY = 1;
     static private final int STATE_DONE = 2;
     static private final int STATE_MIC = 3;
-
-    /* Used to handle permission request */
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
-
     private Model model;
-
     private ProgressBar progressBar;
     private SpeechService speechService;
     private SpeechStreamService speechStreamService;
@@ -80,12 +76,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         progressBar = findViewById(R.id.progress_bar);
         formContainer = findViewById(R.id.form_container);
         visualizer = findViewById(R.id.visualizer);
+        View visualizer_container = findViewById(R.id.visualizer_container);
         setUiState(STATE_START);
 
         // Load preferences
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         setAppTheme(preferences.getString("theme_preference", "system"));
-        visualizer.setVisibility(preferences.getBoolean("visualizer_switch", true) ? View.VISIBLE : View.GONE);
+        visualizer_container.setVisibility(preferences.getBoolean("visualizer_switch", true) ? View.VISIBLE : View.GONE);
 
         findViewById(R.id.record).setOnClickListener(view -> recognizeMicrophone());
         findViewById(R.id.pause).setOnClickListener(view -> togglePause());
@@ -115,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                         speechService = null;
                     }
                     visualizer.clear();
-                    visualizer.setVisibility(enabled ? View.VISIBLE : View.GONE);
+                    visualizer_container.setVisibility(enabled ? View.VISIBLE : View.GONE);
                 }
             }
         };
