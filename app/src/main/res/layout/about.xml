@@ -10,8 +10,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/button_container"
         app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/button_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -44,10 +44,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="@string/description"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:autoLink="web"
                 android:gravity="center"
-                android:autoLink="web" />
+                android:text="@string/description"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
@@ -76,12 +76,12 @@
                         android:id="@+id/developer_link"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_weight="3"
-                        android:text="@string/developer"
-                        android:textAppearance="?android:attr/textAppearanceMedium"
                         android:layout_gravity="center_vertical"
+                        android:layout_weight="3"
+                        android:autoLink="web"
                         android:gravity="center"
-                        android:autoLink="web" />
+                        android:text="@string/developer"
+                        android:textAppearance="?android:attr/textAppearanceMedium" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -90,39 +90,39 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/repository"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:autoLink="web"
                 android:gravity="center"
-                android:autoLink="web" />
+                android:text="@string/repository"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <TextView
                 android:id="@+id/website_link"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                android:text="@string/website"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:autoLink="web"
                 android:gravity="center"
-                android:autoLink="web" />
+                android:text="@string/website"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <TextView
                 android:id="@+id/credits_link"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="@string/credits"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:autoLink="web"
                 android:gravity="center"
-                android:autoLink="web" />
+                android:text="@string/credits"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
 
             <TextView
                 android:id="@+id/version_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/version"
-                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:autoLink="web"
                 android:gravity="center"
-                android:autoLink="web" />
+                android:text="@string/version"
+                android:textAppearance="?android:attr/textAppearanceMedium" />
         </LinearLayout>
     </ScrollView>
 

@@ -1,30 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <ListPreference
-        android:key="theme_preference"
-        android:title="@string/theme_preference_title"
-        android:summary="@string/theme_preference_summary"
         android:defaultValue="system"
         android:entries="@array/theme_options"
         android:entryValues="@array/theme_values"
-        android:icon="@android:drawable/ic_menu_edit" />
+        android:icon="@android:drawable/ic_menu_edit"
+        android:key="theme_preference"
+        android:summary="@string/theme_preference_summary"
+        android:title="@string/theme_preference_title" />
 
     <SwitchPreferenceCompat
-        android:key="visualizer_switch"
-        android:title="@string/visualizer_switch_title"
-        android:summary="@string/visualizer_switch_summary"
         android:defaultValue="true"
-        android:icon="@android:drawable/ic_menu_view" />
+        android:icon="@android:drawable/ic_menu_view"
+        android:key="visualizer_switch"
+        android:summary="@string/visualizer_switch_summary"
+        android:title="@string/visualizer_switch_title" />
 
     <EditTextPreference
-        android:key="line_command_preference"
-        android:title="@string/line_command_title"
-        android:summary="@string/line_command_summary"
         android:defaultValue="línea"
-        android:icon="@android:drawable/ic_menu_preferences" />
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:key="line_command_preference"
+        android:summary="@string/line_command_summary"
+        android:title="@string/line_command_title" />
 
     <Preference
+        android:icon="@android:drawable/ic_menu_revert"
         android:key="reset_preferences"
-        android:title="@string/reset_preferences_title"
-        android:icon="@android:drawable/ic_menu_revert" />
+        android:title="@string/reset_preferences_title" />
 </PreferenceScreen>

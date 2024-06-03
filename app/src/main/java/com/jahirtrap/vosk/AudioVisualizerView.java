@@ -4,11 +4,9 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Outline;
 import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.View;
-import android.view.ViewOutlineProvider;
 
 import androidx.annotation.NonNull;
 
@@ -16,12 +14,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AudioVisualizerView extends View {
-    private static final int LINE_WIDTH = 5;
-    private static final int LINE_SPACE = 5;
-    private static final float SCALE_FACTOR = 4000.0f;
-    private static final float MIN_AMPLITUDE = 120.0f;
-    private Paint linePaint;
+    private static final int LINE_WIDTH = 5, LINE_SPACE = 5;
+    private static final float SCALE_FACTOR = 4000.0f, MIN_AMPLITUDE = 120.0f;
     private List<Float> amplitudes;
+    private Paint linePaint;
 
     public AudioVisualizerView(Context context) {
         super(context);

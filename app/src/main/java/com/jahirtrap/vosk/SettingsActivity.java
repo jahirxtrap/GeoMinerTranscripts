@@ -43,6 +43,9 @@ public class SettingsActivity extends AppCompatActivity {
 
                 lineCommandPreference.setOnPreferenceChangeListener((preference, value) -> {
                     String cleanedValue = ((String) value).trim();
+                    if (cleanedValue.isEmpty()) {
+                        cleanedValue = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("line_command_preference", "línea");
+                    }
                     preference.setSummary(getString(R.string.line_command_summary, cleanedValue));
                     ((EditTextPreference) preference).setText(cleanedValue);
                     return false;
@@ -87,8 +90,11 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         private void updateLineCommandSummary(EditTextPreference preference, String value) {
-            if (value == null) value = "";
-            else value = value.trim();
+            if (value == null || value.trim().isEmpty()) {
+                value = PreferenceManager.getDefaultSharedPreferences(requireContext()).getString("line_command_preference", "línea");
+            } else {
+                value = value.trim();
+            }
             preference.setSummary(getString(R.string.line_command_summary, value));
         }
 

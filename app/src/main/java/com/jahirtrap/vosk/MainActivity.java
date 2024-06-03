@@ -44,31 +44,28 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
-
-    private static final int STATE_START = 0;
-    private static final int STATE_READY = 1;
-    private static final int STATE_DONE = 2;
-    private static final int STATE_MIC = 3;
+    private static final int STATE_START = 0, STATE_READY = 1, STATE_DONE = 2, STATE_MIC = 3;
     private static final int PERMISSIONS_REQUEST_RECORD_AUDIO = 1;
+    private final HashMap<String, EditText> editTextMap = new HashMap<>();
+    private ArrayList<String> resultP = new ArrayList<>(), result = new ArrayList<>();
     private Model model;
     private ProgressBar progressBar;
+    private Toast toast;
     private SpeechService speechService;
     private SpeechStreamService speechStreamService;
     private LinearLayout formContainer;
     private AudioVisualizerView visualizer;
-    private ArrayList<String> resultP = new ArrayList<>();
-    private ArrayList<String> result = new ArrayList<>();
-    private boolean isPaused = false;
+    private boolean isPaused = false, isRecording = false;
     private AudioRecord audioRecord;
-    private boolean isRecording = false;
     private Thread recordingThread;
     private SharedPreferences preferences;
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
-    private HashMap<String, EditText> editTextMap = new HashMap<>();
     private EditText currentEditText;
     private String lineCommand;
 
@@ -132,27 +129,20 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 (model) -> {
                     this.model = model;
                     setUiState(STATE_READY);
-                },
-                (exception) -> setErrorState(R.string.failed + ": " + exception.getMessage()));
+                }, (exception) -> setErrorState(R.string.failed + ": " + exception.getMessage()));
     }
 
     private void setAppTheme(String themePreference) {
-        switch (themePreference) {
-            case "light":
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-                break;
-            case "dark":
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-                break;
-            default:
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
-                break;
-        }
+        HashMap<String, Integer> themeMap = new HashMap<>();
+        themeMap.put("light", AppCompatDelegate.MODE_NIGHT_NO);
+        themeMap.put("dark", AppCompatDelegate.MODE_NIGHT_YES);
+
+        Integer mode = themeMap.getOrDefault(themePreference, AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM);
+        if (mode != null) AppCompatDelegate.setDefaultNightMode(mode);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (requestCode == PERMISSIONS_REQUEST_RECORD_AUDIO) {
@@ -173,7 +163,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Intent intent;
         switch (item.getOrder()) {
             case 100:
                 String text = currentEditText.getText().toString().trim();
@@ -187,12 +176,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 generateForm("template.json");
                 return true;
             case 103:
-                intent = new Intent(this, SettingsActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(this, SettingsActivity.class));
                 return true;
             case 104:
-                intent = new Intent(this, AboutActivity.class);
-                startActivity(intent);
+                startActivity(new Intent(this, AboutActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -205,11 +192,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             speechService.stop();
             speechService = null;
         }
-        resultP.clear();
-        result.clear();
-        for (EditText editText : editTextMap.values()) {
-            editText.setText("");
-        }
+        Collections.fill(resultP, "");
+        Collections.fill(result, "");
+        for (EditText editText : editTextMap.values()) editText.setText("");
     }
 
     private void copyToClipboard(String text) {
@@ -235,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private String normalizeString(String text) {
         text = Normalizer.normalize(text, Normalizer.Form.NFD);
         text = text.replaceAll("\\p{InCombiningDiacriticalMarks}", "");
-        return text.toLowerCase();
+        return text.toLowerCase().trim();
     }
 
     @Override
@@ -245,26 +230,20 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             if (json.has("partial") && !json.get("partial").toString().isEmpty()) {
                 String text = json.getString("partial");
                 if (!text.trim().isEmpty()) {
-                    text = normalizeString(text);
-
+                    String normalizedText = normalizeString(text);
                     String normalizedLineCommand = normalizeString(lineCommand);
-                    if (text.equals(normalizedLineCommand) || text.startsWith(normalizedLineCommand + " ")) {
-                        String lineName = text.replace(normalizedLineCommand, "").trim();
+                    if (normalizedText.startsWith(normalizedLineCommand) || normalizedText.startsWith(normalizedLineCommand + " ")) {
+                        String lineName = normalizedText.replace(normalizedLineCommand, "").trim();
                         if (editTextMap.containsKey(lineName)) {
                             currentEditText = editTextMap.get(lineName);
-                            Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
+                            showToast(lineName);
+                            focusText();
                         }
                     } else {
-                        int index = -1;
-                        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
-                            if (entry.getValue().equals(currentEditText)) {
-                                index = new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
-                                break;
-                            }
-                        }
+                        int index = getIndex();
                         if (index != -1) {
                             resultP.set(index, result.get(index) + text + " ");
-                            currentEditText.setText(resultP.get(index));
+                            fillText(resultP);
                         }
                     }
                 }
@@ -281,27 +260,21 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             if (json.has("text") && !json.get("text").toString().isEmpty()) {
                 String text = json.getString("text");
                 if (!text.trim().isEmpty()) {
-                    text = normalizeString(text);
-
+                    String normalizedText = normalizeString(text);
                     String normalizedLineCommand = normalizeString(lineCommand);
-                    if (text.equals(normalizedLineCommand) || text.startsWith(normalizedLineCommand + " ")) {
-                        String lineName = text.replace(normalizedLineCommand, "").trim();
+                    if (normalizedText.startsWith(normalizedLineCommand) || normalizedText.startsWith(normalizedLineCommand + " ")) {
+                        String lineName = normalizedText.replace(normalizedLineCommand, "").trim();
                         if (editTextMap.containsKey(lineName)) {
                             currentEditText = editTextMap.get(lineName);
-                            Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
+                            showToast(lineName);
+                            focusText();
                         }
                     } else {
-                        int index = -1;
-                        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
-                            if (entry.getValue().equals(currentEditText)) {
-                                index = new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
-                                break;
-                            }
-                        }
+                        int index = getIndex();
                         if (index != -1) {
                             result.set(index, result.get(index) + text + " ");
                             resultP.set(index, result.get(index));
-                            currentEditText.setText(resultP.get(index));
+                            fillText(resultP);
                         }
                     }
                 }
@@ -313,16 +286,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onFinalResult(String hypothesis) {
-        int index = -1;
-        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
-            if (entry.getValue().equals(currentEditText)) {
-                index = new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
-                break;
-            }
-        }
+        int index = getIndex();
         if (index != -1) {
-            result.set(index, resultP.get(index).trim());
-            currentEditText.setText(result.get(index));
+            result.set(index, resultP.get(index));
+            resultP = resultP.stream().map(String::trim).collect(Collectors.toCollection(ArrayList::new));
+            result = result.stream().map(String::trim).collect(Collectors.toCollection(ArrayList::new));
+            fillText(result);
             setUiState(STATE_DONE);
             if (speechStreamService != null) {
                 speechStreamService = null;
@@ -365,9 +334,12 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 startRecording();
                 ((Button) findViewById(R.id.record)).setText(R.string.stop);
                 if (!preferences.getBoolean("visualizer_switch", true))
-                    Toast.makeText(getApplicationContext(), R.string.recording, Toast.LENGTH_SHORT).show();
+                    showToast((String) this.getResources().getText(R.string.recording));
                 findViewById(R.id.record).setEnabled(true);
                 findViewById(R.id.pause).setEnabled(true);
+                int index = getIndex();
+                if (index != -1)
+                    result.set(index, !result.get(index).isEmpty() ? result.get(index) + "\n" : result.get(index));
                 break;
             default:
                 throw new IllegalStateException("Unexpected value: " + state);
@@ -375,9 +347,39 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private void setErrorState(String message) {
-        Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+        showToast(message);
         ((Button) findViewById(R.id.record)).setText(R.string.record);
         findViewById(R.id.record).setEnabled(false);
+    }
+
+    private int getIndex() {
+        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
+            if (entry.getValue().equals(currentEditText))
+                return new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
+        }
+        return -1;
+    }
+
+    private void fillText(ArrayList<String> list) {
+        int i = 0;
+        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
+            if (i >= list.size()) break;
+            entry.getValue().setText(list.get(i++));
+        }
+        focusText();
+    }
+
+    private void focusText() {
+        if (currentEditText != null) {
+            currentEditText.requestFocus();
+            currentEditText.setSelection(currentEditText.getText().length());
+        }
+    }
+
+    public void showToast(String message) {
+        if (toast != null) toast.cancel();
+        toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+        toast.show();
     }
 
     private void generateForm(String filename) {
