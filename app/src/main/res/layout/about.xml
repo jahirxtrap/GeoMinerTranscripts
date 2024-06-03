@@ -52,7 +52,7 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="8dp"
                 app:cardBackgroundColor="?attr/colorSurfaceContainerLowest"
                 app:cardCornerRadius="16dp">
 
@@ -63,10 +63,11 @@
                     android:padding="16dp">
 
                     <ImageView
-                        android:id="@+id/profile_image"
+                        android:id="@+id/profile_dev_image"
                         android:layout_width="64dp"
                         android:layout_height="64dp"
-                        android:contentDescription="@string/profile" />
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="@string/profile_dev" />
 
                     <Space
                         android:layout_width="8dp"
@@ -81,6 +82,43 @@
                         android:autoLink="web"
                         android:gravity="center"
                         android:text="@string/developer"
+                        android:textAppearance="?android:attr/textAppearanceMedium" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="?attr/colorSurfaceContainerLowest"
+                app:cardCornerRadius="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
+
+                    <ImageView
+                        android:id="@+id/profile_web_image"
+                        android:layout_width="64dp"
+                        android:layout_height="64dp"
+                        android:layout_gravity="center_vertical"
+                        android:contentDescription="@string/profile_web" />
+
+                    <Space
+                        android:layout_width="8dp"
+                        android:layout_height="wrap_content" />
+
+                    <TextView
+                        android:id="@+id/web_developer_link"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="3"
+                        android:autoLink="web"
+                        android:gravity="center"
+                        android:text="@string/web_developer"
                         android:textAppearance="?android:attr/textAppearanceMedium" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

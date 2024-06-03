@@ -181,7 +181,14 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 new AlertDialog.Builder(this)
                         .setTitle(R.string.templates_alert_title)
                         .setItems(R.array.templates, (dialog, which) -> {
-                            generateForm("template.json");
+                            switch (which) {
+                                case 1:
+                                    generateForm("template.json");
+                                    break;
+                                default:
+                                    generateForm("default.json");
+                                    break;
+                            }
                         }).show();
                 return true;
             case 103:
