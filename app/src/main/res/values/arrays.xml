@@ -10,4 +10,8 @@
         <item>light</item>
         <item>dark</item>
     </string-array>
+    <string-array name="templates">
+        <item>Por defecto</item>
+        <item>Plantilla</item>
+    </string-array>
 </resources>

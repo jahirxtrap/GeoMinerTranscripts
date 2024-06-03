@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
@@ -104,21 +105,25 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         // Preferences listener
         preferenceListener = (sharedPrefs, key) -> {
             if (key == null) return;
-            if (key.equals("theme_preference")) {
-                recreate();
-            } else if (key.equals("visualizer_switch")) {
-                boolean enabled = sharedPrefs.getBoolean(key, true);
-                if (visualizer != null) {
-                    if (speechService != null) {
-                        setUiState(STATE_DONE);
-                        speechService.stop();
-                        speechService = null;
+            switch (key) {
+                case "theme_preference":
+                    recreate();
+                    break;
+                case "visualizer_switch":
+                    boolean enabled = sharedPrefs.getBoolean(key, true);
+                    if (visualizer != null) {
+                        if (speechService != null) {
+                            setUiState(STATE_DONE);
+                            speechService.stop();
+                            speechService = null;
+                        }
+                        visualizer.clear();
+                        visualizer_container.setVisibility(enabled ? View.VISIBLE : View.GONE);
                     }
-                    visualizer.clear();
-                    visualizer_container.setVisibility(enabled ? View.VISIBLE : View.GONE);
-                }
-            } else if (key.equals("line_command_preference")) {
-                lineCommand = sharedPrefs.getString(key, "línea");
+                    break;
+                case "line_command_preference":
+                    lineCommand = sharedPrefs.getString(key, "línea");
+                    break;
             }
         };
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener);
@@ -173,7 +178,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 return true;
             case 102:
                 clear();
-                generateForm("template.json");
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.templates_alert_title)
+                        .setItems(R.array.templates, (dialog, which) -> {
+                            generateForm("template.json");
+                        }).show();
                 return true;
             case 103:
                 startActivity(new Intent(this, SettingsActivity.class));

@@ -18,10 +18,16 @@
 
     <EditTextPreference
         android:defaultValue="línea"
-        android:icon="@android:drawable/ic_menu_preferences"
+        android:icon="@android:drawable/ic_menu_call"
         android:key="line_command_preference"
         android:summary="@string/line_command_summary"
         android:title="@string/line_command_title" />
+
+    <Preference
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:key="templates"
+        android:summary="@string/templates_summary"
+        android:title="@string/templates_title" />
 
     <Preference
         android:icon="@android:drawable/ic_menu_revert"

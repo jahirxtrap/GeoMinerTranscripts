@@ -1,5 +1,6 @@
 package com.jahirtrap.vosk;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AlertDialog;
@@ -59,6 +60,14 @@ public class SettingsActivity extends AppCompatActivity {
                 visualizerSwitch.setOnPreferenceChangeListener((preference, value) -> {
                     boolean isChecked = (Boolean) value;
                     updateVisualizerSummary((SwitchPreferenceCompat) preference, isChecked);
+                    return true;
+                });
+            }
+
+            Preference templatesPreference = findPreference("templates");
+            if (templatesPreference != null) {
+                templatesPreference.setOnPreferenceClickListener(preference -> {
+                    startActivity(new Intent(getContext(), TemplatesActivity.class));
                     return true;
                 });
             }

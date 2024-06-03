@@ -3,6 +3,7 @@
     "data": {
         "nombre": "",
         "fecha": "",
-        "descripcion": ""
+        "descripcion": "",
+        "comentario": ""
     }
 }

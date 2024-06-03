@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- General -->
     <string name="app_name" translatable="false">GEO Voice Transcriptor</string>
     <string name="record">Grabar</string>
     <string name="stop">Detener</string>
@@ -13,4 +14,33 @@
     <string name="load_template">Cargar plantilla</string>
     <string name="settings">Configuraciones</string>
     <string name="about">Acerca de</string>
+
+    <!-- Settings -->
+    <string name="theme_preference_title">Tema de la app</string>
+    <string name="theme_preference_summary">Tema seleccionado: %s</string>
+    <string name="visualizer_switch_title">Activar el visualizador</string>
+    <string name="visualizer_switch_summary">Visualizador: %1$s</string>
+    <string name="line_command_title">Comando de voz</string>
+    <string name="line_command_summary">Comando definido: %1$s</string>
+    <string name="templates_title">Plantillas</string>
+    <string name="templates_summary">Personalizar plantillas</string>
+    <string name="templates_alert_title">Seleccionar plantilla</string>
+    <string name="reset_preferences_title">Valores predeterminados</string>
+    <string name="reset_preferences_alert_title">Reestablecer valores predeterminados</string>
+    <string name="reset_preferences_alert_message">¿Está seguro de que desea restablecer las configuraciones a sus valores predeterminados?</string>
+    <string name="on">Activado</string>
+    <string name="off">Desactivado</string>
+    <string name="yes">Si</string>
+    <string name="no">No</string>
+
+    <!-- About -->
+    <string name="description">Este proyecto está enfocado en la transcripción de voz a texto, adicionalmente con la capacidad de rellenar formularios personalizables.</string>
+    <string name="version">Versión: %1$s</string>
+    <string name="developer">Desarrollador: https://github.com/jahirxtrap</string>
+    <string name="repository">Repositorio: https://github.com/jahirxtrap/GeoVoiceTranscriptor</string>
+    <string name="website">Página Web: https://diegofernandolojantn.github.io/GeoVoiceTranscriptorWeb/</string>
+    <string name="credits">Créditos: https://github.com/alphacep/vosk-android-demo</string>
+    <string name="logo">Logo</string>
+    <string name="profile">Developer</string>
+    <string name="info">Información de la app</string>
 </resources>
