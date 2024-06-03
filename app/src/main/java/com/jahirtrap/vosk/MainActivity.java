@@ -255,9 +255,17 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                             Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        currentEditText.setText(String.format("%s%s ", currentEditText.getText().toString(), text));
-                        int index = editTextMap.values().toArray(new EditText[0]).length - 1;
-                        result.set(index, currentEditText.getText().toString());
+                        int index = -1;
+                        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
+                            if (entry.getValue().equals(currentEditText)) {
+                                index = new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
+                                break;
+                            }
+                        }
+                        if (index != -1) {
+                            resultP.set(index, result.get(index) + text + " ");
+                            currentEditText.setText(resultP.get(index));
+                        }
                     }
                 }
             }
@@ -283,9 +291,18 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                             Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
                         }
                     } else {
-                        currentEditText.setText(String.format("%s%s ", currentEditText.getText().toString(), text));
-                        int index = editTextMap.values().toArray(new EditText[0]).length - 1;
-                        result.set(index, currentEditText.getText().toString());
+                        int index = -1;
+                        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
+                            if (entry.getValue().equals(currentEditText)) {
+                                index = new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
+                                break;
+                            }
+                        }
+                        if (index != -1) {
+                            result.set(index, result.get(index) + text + " ");
+                            resultP.set(index, result.get(index));
+                            currentEditText.setText(resultP.get(index));
+                        }
                     }
                 }
             }
@@ -296,29 +313,20 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     @Override
     public void onFinalResult(String hypothesis) {
-        try {
-            JSONObject json = new JSONObject(hypothesis);
-            if (json.has("text") && !json.get("text").toString().isEmpty()) {
-                String text = json.getString("text");
-                if (!text.trim().isEmpty()) {
-                    text = normalizeString(text);
-
-                    String normalizedLineCommand = normalizeString(lineCommand);
-                    if (text.equals(normalizedLineCommand) || text.startsWith(normalizedLineCommand + " ")) {
-                        String lineName = text.replace(normalizedLineCommand, "").trim();
-                        if (editTextMap.containsKey(lineName)) {
-                            currentEditText = editTextMap.get(lineName);
-                            Toast.makeText(this, lineName, Toast.LENGTH_SHORT).show();
-                        }
-                    } else {
-                        currentEditText.setText(String.format("%s%s ", currentEditText.getText().toString(), text));
-                        int index = editTextMap.values().toArray(new EditText[0]).length - 1;
-                        result.set(index, currentEditText.getText().toString());
-                    }
-                }
+        int index = -1;
+        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
+            if (entry.getValue().equals(currentEditText)) {
+                index = new ArrayList<>(editTextMap.values()).indexOf(entry.getValue());
+                break;
             }
-        } catch (JSONException e) {
-            e.fillInStackTrace();
+        }
+        if (index != -1) {
+            result.set(index, resultP.get(index).trim());
+            currentEditText.setText(result.get(index));
+            setUiState(STATE_DONE);
+            if (speechStreamService != null) {
+                speechStreamService = null;
+            }
         }
     }
 
