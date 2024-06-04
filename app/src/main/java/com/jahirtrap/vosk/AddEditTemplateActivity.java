@@ -45,7 +45,7 @@ public class AddEditTemplateActivity extends AppCompatActivity {
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         btnAddField.setOnClickListener(v -> {
-            addNewField();
+            addField(null);
             checkFormValidity();
         });
 
@@ -72,7 +72,7 @@ public class AddEditTemplateActivity extends AppCompatActivity {
         }
 
         if (fieldsContainer.getChildCount() == 0) {
-            addNewField();
+            addField(null);
         }
 
         checkFormValidity();
@@ -84,10 +84,14 @@ public class AddEditTemplateActivity extends AppCompatActivity {
         return true;
     }
 
-    private void addNewField() {
+    private void addField(String fieldName) {
         View fieldView = getLayoutInflater().inflate(R.layout.field_item, fieldsContainer, false);
         EditText editFieldName = fieldView.findViewById(R.id.edit_field_name);
         ImageView btnDeleteField = fieldView.findViewById(R.id.btn_delete_field);
+
+        if (fieldName != null) {
+            editFieldName.setText(fieldName);
+        }
 
         editFieldName.addTextChangedListener(new TextWatcher() {
             @Override
@@ -120,10 +124,8 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             for (int i = 0; i < fieldsContainer.getChildCount(); i++) {
                 View fieldView = fieldsContainer.getChildAt(i);
                 EditText editFieldName = fieldView.findViewById(R.id.edit_field_name);
-                EditText editFieldValue = fieldView.findViewById(R.id.edit_field_value);
                 String fieldName = editFieldName.getText().toString().trim();
-                String fieldValue = editFieldValue.getText().toString().trim();
-                data.put(fieldName, fieldValue);
+                data.put(fieldName, "");
             }
 
             JSONObject template = new JSONObject();
@@ -154,45 +156,11 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             Iterator<String> keys = data.keys();
             while (keys.hasNext()) {
                 String key = keys.next();
-                String value = data.getString(key);
-                addFieldWithValue(key, value);
+                addField(key);
             }
         } catch (Exception e) {
             e.fillInStackTrace();
         }
-    }
-
-    private void addFieldWithValue(String fieldName, String fieldValue) {
-        View fieldView = getLayoutInflater().inflate(R.layout.field_item, fieldsContainer, false);
-        EditText editFieldName = fieldView.findViewById(R.id.edit_field_name);
-        EditText editFieldValue = fieldView.findViewById(R.id.edit_field_value);
-        ImageView btnDeleteField = fieldView.findViewById(R.id.btn_delete_field);
-
-        editFieldName.setText(fieldName);
-        editFieldValue.setText(fieldValue);
-
-        editFieldName.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                checkFormValidity();
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-            }
-        });
-
-        btnDeleteField.setOnClickListener(v -> {
-            fieldsContainer.removeView(fieldView);
-            checkFormValidity();
-        });
-
-        fieldsContainer.addView(fieldView);
-        checkFormValidity();
     }
 
     private void checkFormValidity() {

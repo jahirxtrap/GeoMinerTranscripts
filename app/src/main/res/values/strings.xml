@@ -35,7 +35,6 @@
 
     <!-- Templates -->
     <string name="field_name">Campo</string>
-    <string name="field_value">Valor</string>
     <string name="add_field">Agregar campo</string>
     <string name="delete_field">Eliminar Campo</string>
     <string name="add_template">Agregar plantilla</string>
