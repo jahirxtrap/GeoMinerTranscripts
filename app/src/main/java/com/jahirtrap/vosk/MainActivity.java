@@ -172,8 +172,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getOrder()) {
             case 100:
-                String text = currentEditText.getText().toString().trim();
-                if (!text.isEmpty()) copyToClipboard(text);
+                copyToClipboard();
                 return true;
             case 101:
                 clear();
@@ -295,9 +294,22 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         for (EditText editText : editTextMap.values()) editText.setText("");
     }
 
-    private void copyToClipboard(String text) {
+    private void copyToClipboard() {
+        String label = ((TextView) formContainer.getChildAt(0)).getText().toString().trim();
+        StringBuilder text = new StringBuilder();
+        text.append(label).append("\n");
+
+        for (int i = 1; i < formContainer.getChildCount(); i++) {
+            View child = formContainer.getChildAt(i);
+            if (child instanceof EditText) {
+                String field = ((EditText) child).getHint().toString();
+                String value = ((EditText) child).getText().toString().trim();
+                text.append(field).append(": ").append(value).append("\n");
+            }
+        }
+
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-        ClipData clip = ClipData.newPlainText("Copied", text);
+        ClipData clip = ClipData.newPlainText("Copied", text.toString().trim());
         clipboard.setPrimaryClip(clip);
     }
 
