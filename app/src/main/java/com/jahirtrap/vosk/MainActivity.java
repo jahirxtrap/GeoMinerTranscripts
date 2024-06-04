@@ -47,7 +47,9 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
@@ -71,8 +73,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private String lineCommand;
 
     @Override
-    public void onCreate(Bundle state) {
-        super.onCreate(state);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
 
         // Setup layout
@@ -88,8 +90,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         visualizer_container.setVisibility(preferences.getBoolean("visualizer_switch", true) ? View.VISIBLE : View.GONE);
         lineCommand = preferences.getString("line_command_preference", "línea");
 
-        findViewById(R.id.record).setOnClickListener(view -> recognizeMicrophone());
-        findViewById(R.id.pause).setOnClickListener(view -> togglePause());
+        findViewById(R.id.btn_record).setOnClickListener(view -> recognizeMicrophone());
+        findViewById(R.id.btn_pause).setOnClickListener(view -> togglePause());
 
         LibVosk.setLogLevel(LogLevel.INFO);
 
@@ -178,18 +180,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 return true;
             case 102:
                 clear();
-                new AlertDialog.Builder(this)
-                        .setTitle(R.string.templates_alert_title)
-                        .setItems(R.array.templates, (dialog, which) -> {
-                            switch (which) {
-                                case 1:
-                                    generateForm("template.json");
-                                    break;
-                                default:
-                                    generateForm("default.json");
-                                    break;
-                            }
-                        }).show();
+                showTemplateDialog();
                 return true;
             case 103:
                 startActivity(new Intent(this, SettingsActivity.class));
@@ -199,6 +190,74 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void showTemplateDialog() {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Set<String> templates = new HashSet<>(sharedPreferences.getStringSet("templates", new HashSet<>()));
+
+        try {
+            String[] files = getAssets().list("templates");
+            if (files != null) {
+                for (String filename : files) {
+                    templates.add(filename.replace(".json", ""));
+                }
+            }
+        } catch (IOException e) {
+            e.fillInStackTrace();
+        }
+
+        String[] templateArray = templates.toArray(new String[0]);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.templates_alert_title)
+                .setItems(templateArray, (dialog, which) -> {
+                    String selectedTemplate = templateArray[which];
+                    generateFormFromPreferencesOrAssets(selectedTemplate);
+                }).show();
+    }
+
+    private void generateFormFromPreferencesOrAssets(String templateName) {
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String templateJson = sharedPreferences.getString(templateName, null);
+
+        if (templateJson != null) {
+            generateFormFromJson(templateJson);
+        } else {
+            generateForm(templateName + ".json");
+        }
+    }
+
+    private void generateFormFromJson(String templateJson) {
+        try {
+            JSONObject jsonObject = new JSONObject(templateJson);
+            String label = jsonObject.getString("label");
+            JSONObject data = jsonObject.getJSONObject("data");
+
+            formContainer.removeAllViews();
+            editTextMap.clear();
+
+            TextView labelView = new TextView(this);
+            labelView.setText(label);
+            labelView.setTextSize(20);
+            formContainer.addView(labelView);
+
+            int index = 0;
+            for (Iterator<String> it = data.keys(); it.hasNext(); ) {
+                String key = it.next();
+                EditText editText = new EditText(this);
+                editText.setHint(key);
+                editText.setId(View.generateViewId());
+                editTextMap.put(key.toLowerCase(), editText);
+                result.add("");
+                resultP.add("");
+                formContainer.addView(editText);
+                if (index == 0) currentEditText = editText;
+                index++;
+            }
+        } catch (JSONException e) {
+            e.fillInStackTrace();
         }
     }
 
@@ -329,30 +388,30 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         switch (state) {
             case STATE_START:
                 progressBar.setVisibility(View.VISIBLE);
-                findViewById(R.id.record).setEnabled(false);
-                findViewById(R.id.pause).setEnabled(false);
+                findViewById(R.id.btn_record).setEnabled(false);
+                findViewById(R.id.btn_pause).setEnabled(false);
                 break;
             case STATE_READY:
                 progressBar.setVisibility(View.GONE);
-                ((Button) findViewById(R.id.record)).setText(R.string.record);
-                findViewById(R.id.record).setEnabled(true);
-                findViewById(R.id.pause).setEnabled(false);
+                ((Button) findViewById(R.id.btn_record)).setText(R.string.record);
+                findViewById(R.id.btn_record).setEnabled(true);
+                findViewById(R.id.btn_pause).setEnabled(false);
                 break;
             case STATE_DONE:
                 stopRecording();
-                ((Button) findViewById(R.id.record)).setText(R.string.record);
-                findViewById(R.id.record).setEnabled(true);
-                findViewById(R.id.pause).setEnabled(false);
+                ((Button) findViewById(R.id.btn_record)).setText(R.string.record);
+                findViewById(R.id.btn_record).setEnabled(true);
+                findViewById(R.id.btn_pause).setEnabled(false);
                 isPaused = false;
-                ((Button) findViewById(R.id.pause)).setText(R.string.pause);
+                ((Button) findViewById(R.id.btn_pause)).setText(R.string.pause);
                 break;
             case STATE_MIC:
                 startRecording();
-                ((Button) findViewById(R.id.record)).setText(R.string.stop);
+                ((Button) findViewById(R.id.btn_record)).setText(R.string.stop);
                 if (!preferences.getBoolean("visualizer_switch", true))
                     showToast((String) this.getResources().getText(R.string.recording));
-                findViewById(R.id.record).setEnabled(true);
-                findViewById(R.id.pause).setEnabled(true);
+                findViewById(R.id.btn_record).setEnabled(true);
+                findViewById(R.id.btn_pause).setEnabled(true);
                 int index = getIndex();
                 if (index != -1)
                     result.set(index, !result.get(index).isEmpty() ? result.get(index) + "\n" : result.get(index));
@@ -364,8 +423,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private void setErrorState(String message) {
         showToast(message);
-        ((Button) findViewById(R.id.record)).setText(R.string.record);
-        findViewById(R.id.record).setEnabled(false);
+        ((Button) findViewById(R.id.btn_record)).setText(R.string.record);
+        findViewById(R.id.btn_record).setEnabled(false);
     }
 
     private int getIndex() {
@@ -468,7 +527,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             speechService.setPause(isPaused);
             if (isPaused) stopRecording();
             else startRecording();
-            ((Button) findViewById(R.id.pause)).setText(isPaused ? R.string.resume : R.string.pause);
+            ((Button) findViewById(R.id.btn_pause)).setText(isPaused ? R.string.resume : R.string.pause);
         }
     }
 

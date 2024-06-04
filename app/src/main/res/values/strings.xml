@@ -33,6 +33,9 @@
     <string name="yes">Si</string>
     <string name="no">No</string>
 
+    <!-- Templates -->
+    <string name="add_template">Agregar plantilla</string>
+
     <!-- About -->
     <string name="description">Este proyecto está enfocado en la transcripción de voz a texto, adicionalmente con la capacidad de rellenar formularios personalizables.</string>
     <string name="version">Versión: %1$s</string>

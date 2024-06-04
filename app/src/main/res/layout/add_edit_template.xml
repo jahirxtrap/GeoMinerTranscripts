@@ -1,53 +1,35 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="16dp">
 
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        android:layout_width="wrap_content"
+    <EditText
+        android:id="@+id/edit_label"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:hint="Nombre de la plantilla"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <ScrollView
+        android:id="@+id/info"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="8dp"
         android:layout_marginBottom="16dp"
-        app:layout_constraintBottom_toTopOf="@id/visualizer_container"
+        app:layout_constraintBottom_toTopOf="@+id/buttons_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0">
+        app:layout_constraintTop_toBottomOf="@+id/edit_label">
 
         <LinearLayout
-            android:id="@+id/form_container"
+            android:id="@+id/fields_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:contentDescription="@string/result"
             android:orientation="vertical" />
     </ScrollView>
-
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/visualizer_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        app:cardBackgroundColor="?attr/colorSurfaceContainerLowest"
-        app:cardCornerRadius="16dp"
-        app:layout_constraintBottom_toTopOf="@id/buttons_container">
-
-        <com.jahirtrap.vosk.AudioVisualizerView
-            android:id="@+id/visualizer"
-            android:layout_width="match_parent"
-            android:layout_height="60dp"
-            app:line_color="?attr/colorSecondary" />
-    </com.google.android.material.card.MaterialCardView>
 
     <LinearLayout
         android:id="@+id/buttons_container"
@@ -59,11 +41,11 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <Button
-            android:id="@+id/btn_record"
+            android:id="@+id/btn_add_field"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/record"
+            android:text="Agregar campo"
             android:textAllCaps="true" />
 
         <Space
@@ -71,12 +53,11 @@
             android:layout_height="wrap_content" />
 
         <Button
-            android:id="@+id/btn_pause"
+            android:id="@+id/btn_save_template"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="@string/pause"
+            android:text="Guardar plantilla"
             android:textAllCaps="true" />
     </LinearLayout>
-
 </androidx.constraintlayout.widget.ConstraintLayout>
