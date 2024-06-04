@@ -180,7 +180,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <Button
-            android:id="@+id/app_info_button"
+            android:id="@+id/btn_app_info"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/info"

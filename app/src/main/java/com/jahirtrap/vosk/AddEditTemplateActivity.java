@@ -1,5 +1,6 @@
 package com.jahirtrap.vosk;
 
+import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.Editable;
@@ -7,7 +8,7 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -19,10 +20,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+@SuppressLint("MutatingSharedPrefs")
 public class AddEditTemplateActivity extends AppCompatActivity {
     private EditText editLabel;
     private LinearLayout fieldsContainer;
-    private SharedPreferences sharedPreferences;
+    private SharedPreferences preferences;
     private Button btnAddField;
     private Button btnSaveTemplate;
 
@@ -35,12 +37,12 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        editLabel = findViewById(R.id.edit_label);
+        editLabel = findViewById(R.id.edit_template_label);
         fieldsContainer = findViewById(R.id.fields_container);
         btnAddField = findViewById(R.id.btn_add_field);
         btnSaveTemplate = findViewById(R.id.btn_save_template);
 
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
         btnAddField.setOnClickListener(v -> {
             addNewField();
@@ -51,7 +53,8 @@ public class AddEditTemplateActivity extends AppCompatActivity {
 
         editLabel.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -59,16 +62,15 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
-        // Load template if editing
         String templateJson = getIntent().getStringExtra("template");
         if (templateJson != null) {
             loadTemplate(templateJson);
         }
 
-        // Ensure there is at least one field
         if (fieldsContainer.getChildCount() == 0) {
             addNewField();
         }
@@ -85,11 +87,12 @@ public class AddEditTemplateActivity extends AppCompatActivity {
     private void addNewField() {
         View fieldView = getLayoutInflater().inflate(R.layout.field_item, fieldsContainer, false);
         EditText editFieldName = fieldView.findViewById(R.id.edit_field_name);
-        ImageButton btnDeleteField = fieldView.findViewById(R.id.btn_delete_field);
+        ImageView btnDeleteField = fieldView.findViewById(R.id.btn_delete_field);
 
         editFieldName.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -97,15 +100,13 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
-        btnDeleteField.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                fieldsContainer.removeView(fieldView);
-                checkFormValidity();
-            }
+        btnDeleteField.setOnClickListener(v -> {
+            fieldsContainer.removeView(fieldView);
+            checkFormValidity();
         });
 
         fieldsContainer.addView(fieldView);
@@ -129,12 +130,10 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             template.put("label", label);
             template.put("data", data);
 
-            // Save template to SharedPreferences
-            SharedPreferences.Editor editor = sharedPreferences.edit();
+            SharedPreferences.Editor editor = preferences.edit();
             editor.putString(label, template.toString());
 
-            // Add template name to the set of templates
-            Set<String> templates = sharedPreferences.getStringSet("templates", new HashSet<>());
+            Set<String> templates = preferences.getStringSet("templates", new HashSet<>());
             templates.add(label);
             editor.putStringSet("templates", templates);
 
@@ -167,14 +166,15 @@ public class AddEditTemplateActivity extends AppCompatActivity {
         View fieldView = getLayoutInflater().inflate(R.layout.field_item, fieldsContainer, false);
         EditText editFieldName = fieldView.findViewById(R.id.edit_field_name);
         EditText editFieldValue = fieldView.findViewById(R.id.edit_field_value);
-        ImageButton btnDeleteField = fieldView.findViewById(R.id.btn_delete_field);
+        ImageView btnDeleteField = fieldView.findViewById(R.id.btn_delete_field);
 
         editFieldName.setText(fieldName);
         editFieldValue.setText(fieldValue);
 
         editFieldName.addTextChangedListener(new TextWatcher() {
             @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
@@ -182,7 +182,8 @@ public class AddEditTemplateActivity extends AppCompatActivity {
             }
 
             @Override
-            public void afterTextChanged(Editable s) {}
+            public void afterTextChanged(Editable s) {
+            }
         });
 
         btnDeleteField.setOnClickListener(v -> {

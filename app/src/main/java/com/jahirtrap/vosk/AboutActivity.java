@@ -27,7 +27,7 @@ public class AboutActivity extends AppCompatActivity {
         TextView versionText = findViewById(R.id.version_text);
         ImageView profileDevImage = findViewById(R.id.profile_dev_image);
         ImageView profileWebImage = findViewById(R.id.profile_web_image);
-        Button appInfoButton = findViewById(R.id.app_info_button);
+        Button btnAppInfo = findViewById(R.id.btn_app_info);
 
         Glide.with(this)
                 .load(R.drawable.profile_dev)
@@ -45,7 +45,7 @@ public class AboutActivity extends AppCompatActivity {
             e.fillInStackTrace();
         }
 
-        appInfoButton.setOnClickListener(v -> {
+        btnAppInfo.setOnClickListener(v -> {
             Uri uri = Uri.fromParts("package", getPackageName(), null);
             startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).setData(uri));
         });

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -5,10 +6,10 @@
     android:padding="16dp">
 
     <EditText
-        android:id="@+id/edit_label"
+        android:id="@+id/edit_template_label"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Nombre de la plantilla"
+        android:hint="@string/template_label"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -22,7 +23,7 @@
         app:layout_constraintBottom_toTopOf="@+id/buttons_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/edit_label">
+        app:layout_constraintTop_toBottomOf="@+id/edit_template_label">
 
         <LinearLayout
             android:id="@+id/fields_container"
@@ -45,7 +46,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Agregar campo"
+            android:text="@string/add_field"
             android:textAllCaps="true" />
 
         <Space
@@ -57,7 +58,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Guardar plantilla"
+            android:text="@string/save_template"
             android:textAllCaps="true" />
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

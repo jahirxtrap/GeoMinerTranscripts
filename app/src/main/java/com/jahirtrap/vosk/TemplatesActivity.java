@@ -1,17 +1,19 @@
 package com.jahirtrap.vosk;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.preference.PreferenceManager;
-
-import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -21,8 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.Set;
 
+@SuppressLint("MutatingSharedPrefs")
 public class TemplatesActivity extends AppCompatActivity {
-    private static final int ADD_EDIT_TEMPLATE_REQUEST_CODE = 1;
+    private ActivityResultLauncher<Intent> addEditTemplateLauncher;
     private LinearLayout templatesContainer;
     private SharedPreferences sharedPreferences;
 
@@ -35,10 +38,18 @@ public class TemplatesActivity extends AppCompatActivity {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
 
-        FloatingActionButton fabAddTemplate = findViewById(R.id.fab_add_template);
-        fabAddTemplate.setOnClickListener(view -> {
+        addEditTemplateLauncher =
+                registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
+                        result -> {
+                            if (result.getResultCode() == RESULT_OK) {
+                                loadTemplates();
+                            }
+                        });
+
+        Button btnAddTemplate = findViewById(R.id.btn_add_template);
+        btnAddTemplate.setOnClickListener(view -> {
             Intent intent = new Intent(TemplatesActivity.this, AddEditTemplateActivity.class);
-            startActivityForResult(intent, ADD_EDIT_TEMPLATE_REQUEST_CODE);
+            addEditTemplateLauncher.launch(intent);
         });
 
         templatesContainer = findViewById(R.id.templates_container);
@@ -59,14 +70,16 @@ public class TemplatesActivity extends AppCompatActivity {
         // Load templates from assets
         try {
             String[] files = getAssets().list("templates");
-            for (String filename : files) {
-                InputStream is = getAssets().open("templates/" + filename);
-                byte[] buffer = new byte[is.available()];
-                is.read(buffer);
-                is.close();
-                String json = new String(buffer, StandardCharsets.UTF_8);
-                JSONObject template = new JSONObject(json);
-                addTemplateView(template, true); // default template
+            if (files != null) {
+                for (String filename : files) {
+                    InputStream is = getAssets().open("templates/" + filename);
+                    byte[] buffer = new byte[is.available()];
+                    is.read(buffer);
+                    is.close();
+                    String json = new String(buffer, StandardCharsets.UTF_8);
+                    JSONObject template = new JSONObject(json);
+                    addTemplateView(template, true);
+                }
             }
         } catch (Exception e) {
             e.fillInStackTrace();
@@ -107,7 +120,7 @@ public class TemplatesActivity extends AppCompatActivity {
             btnEdit.setOnClickListener(v -> {
                 Intent intent = new Intent(TemplatesActivity.this, AddEditTemplateActivity.class);
                 intent.putExtra("template", template.toString());
-                startActivityForResult(intent, ADD_EDIT_TEMPLATE_REQUEST_CODE);
+                addEditTemplateLauncher.launch(intent);
             });
 
             if (isDefault) {
@@ -137,13 +150,5 @@ public class TemplatesActivity extends AppCompatActivity {
         editor.putStringSet("templates", templates);
 
         editor.apply();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == ADD_EDIT_TEMPLATE_REQUEST_CODE && resultCode == RESULT_OK) {
-            loadTemplates();
-        }
     }
 }

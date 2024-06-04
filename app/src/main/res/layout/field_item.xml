@@ -9,19 +9,21 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:hint="Nombre" />
+        android:hint="@string/field_name" />
 
     <EditText
         android:id="@+id/edit_field_value"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:hint="Valor" />
+        android:hint="@string/field_value" />
 
-    <ImageButton
+    <ImageView
         android:id="@+id/btn_delete_field"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:contentDescription="Eliminar Campo"
+        android:layout_gravity="center"
+        android:layout_marginStart="8dp"
+        android:contentDescription="@string/delete_field"
         android:src="@android:drawable/ic_menu_delete" />
 </LinearLayout>

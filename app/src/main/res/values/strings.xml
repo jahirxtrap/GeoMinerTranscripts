@@ -34,7 +34,13 @@
     <string name="no">No</string>
 
     <!-- Templates -->
+    <string name="field_name">Campo</string>
+    <string name="field_value">Valor</string>
+    <string name="add_field">Agregar campo</string>
+    <string name="delete_field">Eliminar Campo</string>
     <string name="add_template">Agregar plantilla</string>
+    <string name="save_template">Guardar plantilla</string>
+    <string name="template_label">Nombre de la plantilla</string>
 
     <!-- About -->
     <string name="description">Este proyecto está enfocado en la transcripción de voz a texto, adicionalmente con la capacidad de rellenar formularios personalizables.</string>

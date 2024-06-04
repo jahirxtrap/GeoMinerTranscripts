@@ -179,7 +179,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 clear();
                 return true;
             case 102:
-                clear();
                 showTemplateDialog();
                 return true;
             case 103:
@@ -214,29 +213,35 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 .setTitle(R.string.templates_alert_title)
                 .setItems(templateArray, (dialog, which) -> {
                     String selectedTemplate = templateArray[which];
-                    generateFormFromPreferencesOrAssets(selectedTemplate);
+                    clear();
+                    generateForm(selectedTemplate);
                 }).show();
     }
 
-    private void generateFormFromPreferencesOrAssets(String templateName) {
+    private void generateForm(String templateName) {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         String templateJson = sharedPreferences.getString(templateName, null);
 
         if (templateJson != null) {
-            generateFormFromJson(templateJson);
+            generateFormFromPreferencesOrAssets(templateJson, false);
         } else {
-            generateForm(templateName + ".json");
+            generateFormFromPreferencesOrAssets(templateName + ".json", true);
         }
     }
 
-    private void generateFormFromJson(String templateJson) {
+    private void generateFormFromPreferencesOrAssets(String source, boolean isAsset) {
+        JSONObject jsonObject = isAsset ? loadTemplate("templates/" + source) : loadTemplateFromString(source);
+        if (jsonObject == null) {
+            jsonObject = loadTemplate("templates/default.json");
+            if (jsonObject == null) return;
+        }
+
+        formContainer.removeAllViews();
+        editTextMap.clear();
+
         try {
-            JSONObject jsonObject = new JSONObject(templateJson);
             String label = jsonObject.getString("label");
             JSONObject data = jsonObject.getJSONObject("data");
-
-            formContainer.removeAllViews();
-            editTextMap.clear();
 
             TextView labelView = new TextView(this);
             labelView.setText(label);
@@ -261,6 +266,24 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
+    private JSONObject loadTemplate(String path) {
+        try (InputStream is = getAssets().open(path)) {
+            byte[] buffer = new byte[is.available()];
+            is.read(buffer);
+            return new JSONObject(new String(buffer, StandardCharsets.UTF_8));
+        } catch (IOException | JSONException ex) {
+            return null;
+        }
+    }
+
+    private JSONObject loadTemplateFromString(String templateJson) {
+        try {
+            return new JSONObject(templateJson);
+        } catch (JSONException ex) {
+            return null;
+        }
+    }
+
     private void clear() {
         if (speechService != null) {
             setUiState(STATE_DONE);
@@ -281,7 +304,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onDestroy() {
         super.onDestroy();
-
         if (speechService != null) {
             speechService.stop();
             speechService.shutdown();
@@ -455,53 +477,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         if (toast != null) toast.cancel();
         toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
         toast.show();
-    }
-
-    private void generateForm(String filename) {
-        JSONObject jsonObject = loadTemplate("templates/" + filename);
-        if (jsonObject == null) {
-            jsonObject = loadTemplate("templates/default.json");
-            if (jsonObject == null) return;
-        }
-
-        formContainer.removeAllViews();
-        editTextMap.clear();
-
-        try {
-            String label = jsonObject.getString("label");
-            JSONObject data = jsonObject.getJSONObject("data");
-
-            TextView labelView = new TextView(this);
-            labelView.setText(label);
-            labelView.setTextSize(20);
-            formContainer.addView(labelView);
-
-            int index = 0;
-            for (Iterator<String> it = data.keys(); it.hasNext(); ) {
-                String key = it.next();
-                EditText editText = new EditText(this);
-                editText.setHint(key);
-                editText.setId(View.generateViewId());
-                editTextMap.put(key.toLowerCase(), editText);
-                result.add("");
-                resultP.add("");
-                formContainer.addView(editText);
-                if (index == 0) currentEditText = editText;
-                index++;
-            }
-        } catch (JSONException e) {
-            e.fillInStackTrace();
-        }
-    }
-
-    private JSONObject loadTemplate(String path) {
-        try (InputStream is = getAssets().open(path)) {
-            byte[] buffer = new byte[is.available()];
-            is.read(buffer);
-            return new JSONObject(new String(buffer, StandardCharsets.UTF_8));
-        } catch (IOException | JSONException ex) {
-            return null;
-        }
     }
 
     private void recognizeMicrophone() {
