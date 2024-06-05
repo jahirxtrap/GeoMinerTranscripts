@@ -26,10 +26,27 @@
         app:layout_constraintTop_toBottomOf="@+id/edit_template_label">
 
         <LinearLayout
-            android:id="@+id/fields_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical">
+
+            <LinearLayout
+                android:id="@+id/fields_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                app:layout_constraintTop_toBottomOf="@+id/btn_add_field">
+            </LinearLayout>
+
+            <ImageView
+                android:id="@+id/btn_add_field"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center|end"
+                android:layout_marginTop="8dp"
+                android:contentDescription="@string/add_field"
+                android:src="@android:drawable/ic_menu_add" />
+        </LinearLayout>
     </ScrollView>
 
     <LinearLayout
@@ -42,22 +59,9 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <Button
-            android:id="@+id/btn_add_field"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="@string/add_field"
-            android:textAllCaps="true" />
-
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="wrap_content" />
-
-        <Button
             android:id="@+id/btn_save_template"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:text="@string/save_template"
             android:textAllCaps="true" />
     </LinearLayout>

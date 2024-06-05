@@ -25,7 +25,7 @@ public class AddEditTemplateActivity extends AppCompatActivity {
     private EditText editLabel;
     private LinearLayout fieldsContainer;
     private SharedPreferences preferences;
-    private Button btnAddField;
+    private ImageView btnAddField;
     private Button btnSaveTemplate;
 
     @Override
