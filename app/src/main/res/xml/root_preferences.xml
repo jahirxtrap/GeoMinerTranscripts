@@ -16,6 +16,13 @@
         android:summary="@string/visualizer_switch_summary"
         android:title="@string/visualizer_switch_title" />
 
+    <SwitchPreferenceCompat
+        android:defaultValue="false"
+        android:icon="@android:drawable/ic_menu_call"
+        android:key="narrator_switch"
+        android:summary="@string/narrator_switch_summary"
+        android:title="@string/narrator_switch_title" />
+
     <EditTextPreference
         android:defaultValue="línea"
         android:icon="@android:drawable/ic_menu_call"

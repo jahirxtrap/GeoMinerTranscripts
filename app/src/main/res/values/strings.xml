@@ -20,6 +20,8 @@
     <string name="theme_preference_summary">Tema seleccionado: %s</string>
     <string name="visualizer_switch_title">Activar el visualizador</string>
     <string name="visualizer_switch_summary">Visualizador: %1$s</string>
+    <string name="narrator_switch_title">Activar el narrador</string>
+    <string name="narrator_switch_summary">Narrador: %1$s</string>
     <string name="line_command_title">Comando de voz</string>
     <string name="line_command_summary">Comando definido: %1$s</string>
     <string name="templates_title">Plantillas</string>

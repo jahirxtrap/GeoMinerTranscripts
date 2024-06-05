@@ -60,6 +60,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private Model model;
     private ProgressBar progressBar;
     private Toast toast;
+    private TextToSpeechManager tts;
     private SpeechService speechService;
     private SpeechStreamService speechStreamService;
     private LinearLayout formContainer;
@@ -71,6 +72,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     private EditText currentEditText;
     private String lineCommand;
+    private boolean narrator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,8 +90,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         setAppTheme(preferences.getString("theme_preference", "system"));
         visualizer_container.setVisibility(preferences.getBoolean("visualizer_switch", true) ? View.VISIBLE : View.GONE);
+        narrator = preferences.getBoolean("narrator_switch", false);
         lineCommand = preferences.getString("line_command_preference", "línea");
 
+        // Click listeners
         findViewById(R.id.btn_record).setOnClickListener(view -> recognizeMicrophone());
         findViewById(R.id.btn_pause).setOnClickListener(view -> togglePause());
 
@@ -112,7 +116,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     recreate();
                     break;
                 case "visualizer_switch":
-                    boolean enabled = sharedPrefs.getBoolean(key, true);
                     if (visualizer != null) {
                         if (speechService != null) {
                             setUiState(STATE_DONE);
@@ -120,8 +123,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                             speechService = null;
                         }
                         visualizer.clear();
-                        visualizer_container.setVisibility(enabled ? View.VISIBLE : View.GONE);
+                        visualizer_container.setVisibility(sharedPrefs.getBoolean(key, true) ? View.VISIBLE : View.GONE);
                     }
+                    break;
+                case "narrator_switch":
+                    narrator = preferences.getBoolean("narrator_switch", false);
+                    if (narrator) tts = new TextToSpeechManager(this);
+                    else tts.stop();
                     break;
                 case "line_command_preference":
                     lineCommand = sharedPrefs.getString(key, "línea");
@@ -129,6 +137,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             }
         };
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener);
+
+        // Narrator
+        if (narrator) tts = new TextToSpeechManager(this);
     }
 
     private void initModel() {
@@ -324,6 +335,10 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         if (speechStreamService != null) {
             speechStreamService.stop();
         }
+
+        if (tts != null) {
+            tts.stop();
+        }
     }
 
     private String normalizeString(String text) {
@@ -401,7 +416,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             resultP = resultP.stream().map(String::trim).collect(Collectors.toCollection(ArrayList::new));
             result = result.stream().map(String::trim).collect(Collectors.toCollection(ArrayList::new));
             fillText(result);
-            setUiState(STATE_DONE);
             if (speechStreamService != null) {
                 speechStreamService = null;
             }
@@ -432,6 +446,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 findViewById(R.id.btn_pause).setEnabled(false);
                 break;
             case STATE_DONE:
+                if (narrator) tts.speak("Grabación detenida");
                 stopRecording();
                 ((Button) findViewById(R.id.btn_record)).setText(R.string.record);
                 findViewById(R.id.btn_record).setEnabled(true);
@@ -440,6 +455,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 ((Button) findViewById(R.id.btn_pause)).setText(R.string.pause);
                 break;
             case STATE_MIC:
+                if (narrator) tts.speak("Grabación iniciada");
                 startRecording();
                 ((Button) findViewById(R.id.btn_record)).setText(R.string.stop);
                 if (!preferences.getBoolean("visualizer_switch", true))

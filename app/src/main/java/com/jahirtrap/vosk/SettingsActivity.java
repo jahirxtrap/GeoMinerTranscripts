@@ -64,6 +64,17 @@ public class SettingsActivity extends AppCompatActivity {
                 });
             }
 
+            SwitchPreferenceCompat narratorSwitch = findPreference("narrator_switch");
+            if (narratorSwitch != null) {
+                updateNarratorSummary(narratorSwitch);
+
+                narratorSwitch.setOnPreferenceChangeListener((preference, value) -> {
+                    boolean isChecked = (Boolean) value;
+                    updateNarratorSummary((SwitchPreferenceCompat) preference, isChecked);
+                    return true;
+                });
+            }
+
             Preference templatesPreference = findPreference("templates");
             if (templatesPreference != null) {
                 templatesPreference.setOnPreferenceClickListener(preference -> {
@@ -114,6 +125,15 @@ public class SettingsActivity extends AppCompatActivity {
         private void updateVisualizerSummary(SwitchPreferenceCompat preference, boolean isEnabled) {
             String status = isEnabled ? getString(R.string.on) : getString(R.string.off);
             preference.setSummary(getString(R.string.visualizer_switch_summary, status));
+        }
+
+        private void updateNarratorSummary(SwitchPreferenceCompat preference) {
+            updateNarratorSummary(preference, preference.isChecked());
+        }
+
+        private void updateNarratorSummary(SwitchPreferenceCompat preference, boolean isEnabled) {
+            String status = isEnabled ? getString(R.string.on) : getString(R.string.off);
+            preference.setSummary(getString(R.string.narrator_switch_summary, status));
         }
     }
 }
