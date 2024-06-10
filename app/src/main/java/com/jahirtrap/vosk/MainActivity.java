@@ -3,6 +3,7 @@ package com.jahirtrap.vosk;
 import android.Manifest;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -10,7 +11,11 @@ import android.content.pm.PackageManager;
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -22,12 +27,24 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
+
+import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.layout.Document;
+import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Paragraph;
+import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.property.UnitValue;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -40,9 +57,13 @@ import org.vosk.android.SpeechService;
 import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -108,6 +129,9 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         // Load default template
         generateForm("default.json");
 
+        // Narrator
+        tts = new TextToSpeechManager(this);
+
         // Preferences listener
         preferenceListener = (sharedPrefs, key) -> {
             if (key == null) return;
@@ -137,9 +161,6 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             }
         };
         preferences.registerOnSharedPreferenceChangeListener(preferenceListener);
-
-        // Narrator
-        if (narrator) tts = new TextToSpeechManager(this);
     }
 
     private void initModel() {
@@ -192,14 +213,114 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 showTemplateDialog();
                 return true;
             case 103:
-                startActivity(new Intent(this, SettingsActivity.class));
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    createPdf();
+                } else {
+                    if (checkPermission()) {
+                        createPdf();
+                    }
+                }
                 return true;
             case 104:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            case 105:
                 startActivity(new Intent(this, AboutActivity.class));
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private final ActivityResultLauncher<String> requestPermissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (isGranted) {
+                    createPdf();
+                }
+            });
+
+    private boolean checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+            requestPermissionLauncher.launch(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    private void createPdf() {
+        String label = ((TextView) formContainer.getChildAt(0)).getText().toString().trim();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            createPdfForAndroid10AndAbove(label);
+        } else {
+            createPdfForBelowAndroid10(label);
+        }
+    }
+
+    private void createPdfForAndroid10AndAbove(String label) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, label + ".pdf");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Documents/");
+
+        OutputStream outputStream;
+        try {
+            Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), contentValues);
+            if (uri != null) {
+                outputStream = getContentResolver().openOutputStream(uri);
+                if (outputStream != null) {
+                    writePdfContent(outputStream, label);
+                    outputStream.close();
+                    showToast((String) this.getResources().getText(R.string.pdf_success));
+                }
+            } else {
+                showToast((String) this.getResources().getText(R.string.pdf_error));
+            }
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.pdf_error));
+        }
+    }
+
+    private void createPdfForBelowAndroid10(String label) {
+        File pdfDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "MyApp");
+        if (!pdfDir.exists()) {
+            pdfDir.mkdirs();
+        }
+
+        File pdfFile = new File(pdfDir, label + ".pdf");
+        try {
+            OutputStream outputStream = Files.newOutputStream(pdfFile.toPath());
+            writePdfContent(outputStream, label);
+            outputStream.close();
+            showToast((String) this.getResources().getText(R.string.pdf_success));
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.pdf_error));
+        }
+    }
+
+    private void writePdfContent(OutputStream outputStream, String label) {
+        PdfWriter writer = new PdfWriter(outputStream);
+        PdfDocument pdfDocument = new PdfDocument(writer);
+        Document document = new Document(pdfDocument);
+
+        Table table = new Table(UnitValue.createPercentArray(new float[]{1, 2})).useAllAvailableWidth();
+        Cell cell = new Cell(1, 2).add(new Paragraph(label));
+        cell.setBackgroundColor(ColorConstants.LIGHT_GRAY);
+        table.addCell(cell);
+
+        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
+            String hint = entry.getKey();
+            String value = entry.getValue().getText().toString();
+            table.addCell(new Cell().add(new Paragraph(hint)));
+            table.addCell(new Cell().add(new Paragraph(value)));
+        }
+
+        document.add(table);
+        document.close();
     }
 
     private void showTemplateDialog() {

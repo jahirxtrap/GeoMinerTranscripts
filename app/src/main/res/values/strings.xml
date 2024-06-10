@@ -4,14 +4,13 @@
     <string name="app_name" translatable="false">GEO Voice Transcriptor</string>
     <string name="record">Grabar</string>
     <string name="stop">Detener</string>
-    <string name="recording">Grabando…</string>
-    <string name="failed">Carga fallida</string>
     <string name="pause">Pausar</string>
     <string name="resume">Continuar</string>
     <string name="result">Resultado</string>
     <string name="copy_text">Copiar</string>
     <string name="clear_all">Borrar todo</string>
     <string name="load_template">Cargar plantilla</string>
+    <string name="export">Exportar a PDF</string>
     <string name="settings">Configuraciones</string>
     <string name="about">Acerca de</string>
 
@@ -55,4 +54,10 @@
     <string name="profile_dev">Developer</string>
     <string name="profile_web">Web developer</string>
     <string name="info">Información de la app</string>
+
+    <!-- Messages -->
+    <string name="recording">Grabando…</string>
+    <string name="failed">Carga fallida</string>
+    <string name="pdf_success">Documento guardado con éxito</string>
+    <string name="pdf_error">Error al guardar el documento</string>
 </resources>
