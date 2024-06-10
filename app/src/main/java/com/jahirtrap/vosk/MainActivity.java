@@ -58,7 +58,6 @@ import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -251,7 +250,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private void createPdf() {
-        String label = ((TextView) formContainer.getChildAt(0)).getText().toString().trim();
+        String label = capitalizeFirstLetter(((TextView) formContainer.getChildAt(0)).getText().toString().trim());
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             createPdfForAndroid10AndAbove(label);
         } else {
@@ -312,15 +311,23 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         cell.setBackgroundColor(ColorConstants.LIGHT_GRAY);
         table.addCell(cell);
 
-        for (HashMap.Entry<String, EditText> entry : editTextMap.entrySet()) {
-            String hint = entry.getKey();
-            String value = entry.getValue().getText().toString();
-            table.addCell(new Cell().add(new Paragraph(hint)));
-            table.addCell(new Cell().add(new Paragraph(value)));
+        for (int i = 1; i < formContainer.getChildCount(); i++) {
+            View child = formContainer.getChildAt(i);
+            if (child instanceof EditText) {
+                String field = capitalizeFirstLetter(((EditText) child).getHint().toString());
+                String value = capitalizeFirstLetter(((EditText) child).getText().toString().trim());
+                table.addCell(new Cell().add(new Paragraph(field)));
+                table.addCell(new Cell().add(new Paragraph(value)));
+            }
         }
 
         document.add(table);
         document.close();
+    }
+
+    public String capitalizeFirstLetter(String input) {
+        if (input == null || input.isEmpty()) return input;
+        return input.substring(0, 1).toUpperCase() + input.substring(1);
     }
 
     private void showTemplateDialog() {
@@ -427,15 +434,15 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     }
 
     private void copyToClipboard() {
-        String label = ((TextView) formContainer.getChildAt(0)).getText().toString().trim();
+        String label = capitalizeFirstLetter(((TextView) formContainer.getChildAt(0)).getText().toString().trim());
         StringBuilder text = new StringBuilder();
         text.append(label).append("\n");
 
         for (int i = 1; i < formContainer.getChildCount(); i++) {
             View child = formContainer.getChildAt(i);
             if (child instanceof EditText) {
-                String field = ((EditText) child).getHint().toString();
-                String value = ((EditText) child).getText().toString().trim();
+                String field = capitalizeFirstLetter(((EditText) child).getHint().toString());
+                String value = capitalizeFirstLetter(((EditText) child).getText().toString().trim());
                 text.append(field).append(": ").append(value).append("\n");
             }
         }

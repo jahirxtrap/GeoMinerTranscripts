@@ -27,6 +27,7 @@ public class AboutActivity extends AppCompatActivity {
         TextView versionText = findViewById(R.id.version_text);
         ImageView profileDevImage = findViewById(R.id.profile_dev_image);
         ImageView profileWebImage = findViewById(R.id.profile_web_image);
+        ImageView profileResImage = findViewById(R.id.profile_res_image);
         Button btnAppInfo = findViewById(R.id.btn_app_info);
 
         Glide.with(this)
@@ -38,6 +39,11 @@ public class AboutActivity extends AppCompatActivity {
                 .load(R.drawable.profile_web)
                 .transform(new CircleCrop())
                 .into(profileWebImage);
+
+        Glide.with(this)
+                .load(R.drawable.profile_res)
+                .transform(new CircleCrop())
+                .into(profileResImage);
 
         try {
             versionText.setText(getString(R.string.version, getPackageManager().getPackageInfo(getPackageName(), 0).versionName));
