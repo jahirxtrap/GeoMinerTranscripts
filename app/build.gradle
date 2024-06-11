@@ -48,4 +48,6 @@ dependencies {
     annotationProcessor 'com.github.bumptech.glide:compiler:5.0.0-rc01'
     implementation 'com.itextpdf:itext7-core:7.1.15'
     implementation 'com.itextpdf:layout:7.1.15'
+    implementation 'org.apache.poi:poi-ooxml:5.2.3'
+    implementation 'org.apache.commons:commons-csv:1.9.0'
 }

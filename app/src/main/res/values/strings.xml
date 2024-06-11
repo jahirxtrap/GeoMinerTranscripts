@@ -10,7 +10,11 @@
     <string name="copy_text">Copiar</string>
     <string name="clear_all">Borrar todo</string>
     <string name="load_template">Cargar plantilla</string>
-    <string name="export">Exportar a PDF</string>
+    <string name="export_to">Exportar a</string>
+    <string name="export_to_pdf">.pdf</string>
+    <string name="export_to_docx">.docx</string>
+    <string name="export_to_csv">.csv</string>
+    <string name="export_to_txt">.txt</string>
     <string name="settings">Configuraciones</string>
     <string name="about">Acerca de</string>
 
@@ -60,6 +64,6 @@
     <!-- Messages -->
     <string name="recording">Grabando…</string>
     <string name="failed">Carga fallida</string>
-    <string name="pdf_success">Documento guardado con éxito</string>
-    <string name="pdf_error">Error al guardar el documento</string>
+    <string name="export_success">Archivo guardado con éxito</string>
+    <string name="export_error">Error al guardar el archivo</string>
 </resources>

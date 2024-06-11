@@ -38,6 +38,7 @@ import androidx.core.content.ContextCompat;
 import androidx.preference.PreferenceManager;
 
 import com.itextpdf.kernel.colors.ColorConstants;
+import com.itextpdf.kernel.geom.PageSize;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.layout.Document;
@@ -46,8 +47,21 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.property.UnitValue;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.poi.xwpf.usermodel.XWPFDocument;
+import org.apache.poi.xwpf.usermodel.XWPFParagraph;
+import org.apache.poi.xwpf.usermodel.XWPFRun;
+import org.apache.poi.xwpf.usermodel.XWPFTable;
+import org.apache.poi.xwpf.usermodel.XWPFTableCell;
+import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTPageSz;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTSectPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 import org.vosk.LibVosk;
 import org.vosk.LogLevel;
 import org.vosk.Model;
@@ -57,10 +71,15 @@ import org.vosk.android.SpeechService;
 import org.vosk.android.SpeechStreamService;
 import org.vosk.android.StorageService;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.Normalizer;
@@ -92,6 +111,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private SharedPreferences.OnSharedPreferenceChangeListener preferenceListener;
     private EditText currentEditText;
     private String lineCommand;
+    private String format;
     private boolean narrator;
 
     @Override
@@ -211,21 +231,26 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             case 102:
                 showTemplateDialog();
                 return true;
-            case 103:
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
-                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    createPdf();
-                } else {
-                    if (checkPermission()) {
-                        createPdf();
-                    }
-                }
-                return true;
             case 104:
-                startActivity(new Intent(this, SettingsActivity.class));
+                format = "pdf";
+                exportTo(format);
                 return true;
             case 105:
+                format = "docx";
+                exportTo(format);
+                return true;
+            case 106:
+                format = "csv";
+                exportTo(format);
+                return true;
+            case 107:
+                format = "txt";
+                exportTo(format);
+                return true;
+            case 108:
+                startActivity(new Intent(this, SettingsActivity.class));
+                return true;
+            case 109:
                 startActivity(new Intent(this, AboutActivity.class));
                 return true;
             default:
@@ -233,10 +258,22 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
+    private void exportTo(String format) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            exportData(format);
+        } else {
+            if (checkPermission()) {
+                exportData(format);
+            }
+        }
+    }
+
     private final ActivityResultLauncher<String> requestPermissionLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
                 if (isGranted) {
-                    createPdf();
+                    exportData(format);
                 }
             });
 
@@ -249,12 +286,37 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
-    private void createPdf() {
+    private void exportData(String format) {
         String label = capitalizeFirstLetter(((TextView) formContainer.getChildAt(0)).getText().toString().trim());
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            createPdfForAndroid10AndAbove(label);
-        } else {
-            createPdfForBelowAndroid10(label);
+        switch (format) {
+            case "pdf":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    createPdfForAndroid10AndAbove(label);
+                } else {
+                    createPdfForBelowAndroid10(label);
+                }
+                break;
+            case "docx":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    createDocxForAndroid10AndAbove(label);
+                } else {
+                    createDocxForBelowAndroid10(label);
+                }
+                break;
+            case "csv":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    createCsvForAndroid10AndAbove(label);
+                } else {
+                    createCsvForBelowAndroid10(label);
+                }
+                break;
+            case "txt":
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    createTxtForAndroid10AndAbove(label);
+                } else {
+                    createTxtForBelowAndroid10(label);
+                }
+                break;
         }
     }
 
@@ -272,39 +334,39 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 if (outputStream != null) {
                     writePdfContent(outputStream, label);
                     outputStream.close();
-                    showToast((String) this.getResources().getText(R.string.pdf_success));
+                    showToast((String) this.getResources().getText(R.string.export_success));
                 }
             } else {
-                showToast((String) this.getResources().getText(R.string.pdf_error));
+                showToast((String) this.getResources().getText(R.string.export_error));
             }
         } catch (IOException e) {
             e.fillInStackTrace();
-            showToast((String) this.getResources().getText(R.string.pdf_error));
+            showToast((String) this.getResources().getText(R.string.export_error));
         }
     }
 
     private void createPdfForBelowAndroid10(String label) {
-        File pdfDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "MyApp");
-        if (!pdfDir.exists()) {
-            pdfDir.mkdirs();
-        }
+        File pdfDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        if (!pdfDir.exists()) return;
 
         File pdfFile = new File(pdfDir, label + ".pdf");
         try {
             OutputStream outputStream = Files.newOutputStream(pdfFile.toPath());
             writePdfContent(outputStream, label);
             outputStream.close();
-            showToast((String) this.getResources().getText(R.string.pdf_success));
+            showToast((String) this.getResources().getText(R.string.export_success));
         } catch (IOException e) {
             e.fillInStackTrace();
-            showToast((String) this.getResources().getText(R.string.pdf_error));
+            showToast((String) this.getResources().getText(R.string.export_error));
         }
     }
 
     private void writePdfContent(OutputStream outputStream, String label) {
         PdfWriter writer = new PdfWriter(outputStream);
         PdfDocument pdfDocument = new PdfDocument(writer);
+        pdfDocument.setDefaultPageSize(PageSize.A4);
         Document document = new Document(pdfDocument);
+        document.setMargins(28.35f, 28.35f, 28.35f, 28.35f);
 
         Table table = new Table(UnitValue.createPercentArray(new float[]{1, 2})).useAllAvailableWidth();
         Cell cell = new Cell(1, 2).add(new Paragraph(label));
@@ -323,6 +385,228 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
         document.add(table);
         document.close();
+    }
+
+    private void createDocxForAndroid10AndAbove(String label) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, label + ".docx");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Documents/");
+
+        try {
+            Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), contentValues);
+            if (uri != null) {
+                try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
+                    if (outputStream != null) {
+                        writeDocxContent(outputStream, label);
+                        showToast((String) this.getResources().getText(R.string.export_success));
+                    }
+                }
+            } else {
+                showToast((String) this.getResources().getText(R.string.export_error));
+            }
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    private void createDocxForBelowAndroid10(String label) {
+        File docxDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        if (!docxDir.exists()) return;
+
+        File docxFile = new File(docxDir, label + ".docx");
+        try (FileOutputStream outputStream = new FileOutputStream(docxFile)) {
+            writeDocxContent(outputStream, label);
+            showToast((String) this.getResources().getText(R.string.export_success));
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    public void writeDocxContent(OutputStream outputStream, String label) {
+        XWPFDocument document = new XWPFDocument();
+
+        CTSectPr sectPr = document.getDocument().getBody().addNewSectPr();
+
+        CTPageSz pageSz = sectPr.addNewPgSz();
+        pageSz.setW(BigInteger.valueOf(11906));
+        pageSz.setH(BigInteger.valueOf(16838));
+
+        sectPr.addNewPgMar().setLeft(BigInteger.valueOf(567));
+        sectPr.addNewPgMar().setRight(BigInteger.valueOf(567));
+        sectPr.addNewPgMar().setTop(BigInteger.valueOf(567));
+        sectPr.addNewPgMar().setBottom(BigInteger.valueOf(567));
+
+        XWPFTable table = document.createTable(1, 2);
+
+        CTTblWidth tblWidth = table.getCTTbl().addNewTblPr().addNewTblW();
+        tblWidth.setType(STTblWidth.DXA);
+        tblWidth.setW(BigInteger.valueOf(10772));
+
+        XWPFTableRow headerRow = table.getRow(0);
+
+        XWPFTableCell headerCell = headerRow.getCell(0);
+        setCellText(headerCell, label);
+        headerCell.setColor("C0C0C0");
+
+        CTTcPr tcPr = headerCell.getCTTc().addNewTcPr();
+        tcPr.addNewGridSpan().setVal(BigInteger.valueOf(2));
+        headerRow.removeCell(1);
+
+        for (int i = 1; i < formContainer.getChildCount(); i++) {
+            View child = formContainer.getChildAt(i);
+            if (child instanceof EditText) {
+                String field = capitalizeFirstLetter(((EditText) child).getHint().toString());
+                String value = capitalizeFirstLetter(((EditText) child).getText().toString().trim());
+                XWPFTableRow row = table.createRow();
+                XWPFTableCell cell1 = row.getCell(0);
+                if (cell1 == null) {
+                    cell1 = row.createCell();
+                }
+                XWPFTableCell cell2 = row.getCell(1);
+                if (cell2 == null) {
+                    cell2 = row.createCell();
+                }
+
+                setCellWidth(cell1, 3590);
+                setCellWidth(cell2, 7182);
+
+                setCellText(cell1, field);
+                setCellText(cell2, value);
+            }
+        }
+
+        try {
+            document.write(outputStream);
+            outputStream.close();
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    private void setCellWidth(XWPFTableCell cell, int width) {
+        CTTcPr tcPr = cell.getCTTc().addNewTcPr();
+        CTTblWidth cellWidth = tcPr.addNewTcW();
+        cellWidth.setType(STTblWidth.DXA);
+        cellWidth.setW(BigInteger.valueOf(width));
+    }
+
+    private void setCellText(XWPFTableCell cell, String text) {
+        XWPFParagraph para = cell.getParagraphs().get(0);
+        para.setIndentationLeft(42);
+        para.setIndentationRight(42);
+        para.setSpacingBefore(68);
+        para.setSpacingAfter(68);
+        para.setWordWrap(true);
+        XWPFRun run = para.createRun();
+        run.setFontFamily("Arial");
+        run.setFontSize(12);
+        run.setText(text);
+    }
+
+    private void createCsvForAndroid10AndAbove(String label) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, label + ".csv");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Documents/");
+
+        try {
+            Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), contentValues);
+            if (uri != null) {
+                try (OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+                    writeCsvContent(writer, label);
+                    showToast((String) this.getResources().getText(R.string.export_success));
+                }
+            } else {
+                showToast((String) this.getResources().getText(R.string.export_error));
+            }
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    private void createCsvForBelowAndroid10(String label) {
+        File csvDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        if (!csvDir.exists()) return;
+
+        File csvFile = new File(csvDir, label + ".csv");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
+            writeCsvContent(writer, label);
+            showToast((String) this.getResources().getText(R.string.export_success));
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    private void writeCsvContent(BufferedWriter writer, String label) throws IOException {
+        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(label));
+
+        for (int i = 1; i < formContainer.getChildCount(); i++) {
+            View child = formContainer.getChildAt(i);
+            if (child instanceof EditText) {
+                String field = capitalizeFirstLetter(((EditText) child).getHint().toString());
+                String value = capitalizeFirstLetter(((EditText) child).getText().toString().trim());
+                csvPrinter.printRecord(field, value);
+            }
+        }
+
+        csvPrinter.flush();
+    }
+
+    private void createTxtForAndroid10AndAbove(String label) {
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, label + ".txt");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "text/plain");
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Documents/");
+
+        try {
+            Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), contentValues);
+            if (uri != null) {
+                try (OutputStream outputStream = getContentResolver().openOutputStream(uri);
+                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+                    writeTxtContent(writer, label);
+                    showToast((String) this.getResources().getText(R.string.export_success));
+                }
+            } else {
+                showToast((String) this.getResources().getText(R.string.export_error));
+            }
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    private void createTxtForBelowAndroid10(String label) {
+        File txtDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        if (!txtDir.exists()) return;
+
+        File txtFile = new File(txtDir, label + ".txt");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(txtFile))) {
+            writeTxtContent(writer, label);
+            showToast((String) this.getResources().getText(R.string.export_success));
+        } catch (IOException e) {
+            e.fillInStackTrace();
+            showToast((String) this.getResources().getText(R.string.export_error));
+        }
+    }
+
+    private void writeTxtContent(BufferedWriter writer, String label) throws IOException {
+        writer.write(label + "\n");
+
+        for (int i = 1; i < formContainer.getChildCount(); i++) {
+            View child = formContainer.getChildAt(i);
+            if (child instanceof EditText) {
+                String field = capitalizeFirstLetter(((EditText) child).getHint().toString());
+                String value = capitalizeFirstLetter(((EditText) child).getText().toString().trim());
+                writer.write(field + ": " + value + "\n");
+            }
+        }
     }
 
     public String capitalizeFirstLetter(String input) {
