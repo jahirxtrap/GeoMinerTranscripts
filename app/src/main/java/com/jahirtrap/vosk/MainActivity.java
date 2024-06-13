@@ -778,7 +778,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     } else {
                         int index = getIndex();
                         if (index != -1) {
-                            resultP.set(index, result.get(index) + text + " ");
+                            //String value = textToNumber(normalizedText);
+                            resultP.set(index, result.get(index) + normalizedText + " ");
                             fillText(resultP);
                         }
                     }
@@ -808,7 +809,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     } else {
                         int index = getIndex();
                         if (index != -1) {
-                            result.set(index, result.get(index) + text + " ");
+                            //String value = textToNumber(normalizedText);
+                            result.set(index, result.get(index) + normalizedText + " ");
                             resultP.set(index, result.get(index));
                             fillText(resultP);
                         }
@@ -842,6 +844,105 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     @Override
     public void onTimeout() {
         setUiState(STATE_DONE);
+    }
+
+    private static String textToNumber(String text) {
+        HashMap<String, Integer> mapNumber = getStringIntegerHashMap();
+
+        int total = 0;
+        int current = 0;
+        int lastMil = 0;
+        boolean foundNumber = false;
+        boolean isNegative = false;
+
+        String[] palabras = text.split("\\s+");
+        for (String palabra : palabras) {
+            if (palabra.equals("menos")) {
+                isNegative = true;
+            } else if (mapNumber.containsKey(palabra)) {
+                foundNumber = true;
+                int valor = mapNumber.get(palabra);
+                if (valor == 1000) {
+                    if (current == 0) current = 1;
+                    lastMil += current * 1000;
+                    current = 0;
+                } else if (valor == 1000000) {
+                    if (current == 0) current = 1;
+                    total += (lastMil + current) * 1000000;
+                    lastMil = 0;
+                    current = 0;
+                } else if (valor >= 100) {
+                    current *= valor;
+                } else {
+                    current += valor;
+                }
+            }
+        }
+
+        if (!foundNumber) return text;
+
+        total += lastMil + current;
+        if (isNegative) {
+            total = -total;
+        }
+
+        return String.valueOf(total);
+    }
+
+    @NonNull
+    private static HashMap<String, Integer> getStringIntegerHashMap() {
+        HashMap<String, Integer> mapNumber = new HashMap<>();
+        mapNumber.put("cero", 0);
+        mapNumber.put("uno", 1);
+        mapNumber.put("dos", 2);
+        mapNumber.put("tres", 3);
+        mapNumber.put("cuatro", 4);
+        mapNumber.put("cinco", 5);
+        mapNumber.put("seis", 6);
+        mapNumber.put("siete", 7);
+        mapNumber.put("ocho", 8);
+        mapNumber.put("nueve", 9);
+        mapNumber.put("diez", 10);
+        mapNumber.put("once", 11);
+        mapNumber.put("doce", 12);
+        mapNumber.put("trece", 13);
+        mapNumber.put("catorce", 14);
+        mapNumber.put("quince", 15);
+        mapNumber.put("dieciseis", 16);
+        mapNumber.put("diecisiete", 17);
+        mapNumber.put("dieciocho", 18);
+        mapNumber.put("diecinueve", 19);
+        mapNumber.put("veinte", 20);
+        mapNumber.put("veintiuno", 21);
+        mapNumber.put("veintidos", 22);
+        mapNumber.put("veintitres", 23);
+        mapNumber.put("veinticuatro", 24);
+        mapNumber.put("veinticinco", 25);
+        mapNumber.put("veintiseis", 26);
+        mapNumber.put("veintisiete", 27);
+        mapNumber.put("veintiocho", 28);
+        mapNumber.put("veintinueve", 29);
+        mapNumber.put("treinta", 30);
+        mapNumber.put("cuarenta", 40);
+        mapNumber.put("cincuenta", 50);
+        mapNumber.put("sesenta", 60);
+        mapNumber.put("setenta", 70);
+        mapNumber.put("ochenta", 80);
+        mapNumber.put("noventa", 90);
+        mapNumber.put("cien", 100);
+        mapNumber.put("ciento", 100);
+        mapNumber.put("doscientos", 200);
+        mapNumber.put("trescientos", 300);
+        mapNumber.put("cuatrocientos", 400);
+        mapNumber.put("quinientos", 500);
+        mapNumber.put("seiscientos", 600);
+        mapNumber.put("setecientos", 700);
+        mapNumber.put("ochocientos", 800);
+        mapNumber.put("novecientos", 900);
+        mapNumber.put("mil", 1000);
+        mapNumber.put("millon", 1000000);
+        mapNumber.put("millones", 1000000);
+        return mapNumber;
     }
 
     private void setUiState(int state) {
