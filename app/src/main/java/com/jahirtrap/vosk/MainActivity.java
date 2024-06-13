@@ -146,7 +146,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
 
         // Load default template
-        generateForm("default.json");
+        generateForm("Default.json");
 
         // Narrator
         tts = new TextToSpeechManager(this);
@@ -654,7 +654,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
     private void generateFormFromPreferencesOrAssets(String source, boolean isAsset) {
         JSONObject jsonObject = isAsset ? loadTemplate("templates/" + source) : loadTemplateFromString(source);
         if (jsonObject == null) {
-            jsonObject = loadTemplate("templates/default.json");
+            jsonObject = loadTemplate("templates/Default.json");
             if (jsonObject == null) return;
         }
 

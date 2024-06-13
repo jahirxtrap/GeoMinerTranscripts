@@ -11,10 +11,10 @@
     <string name="clear_all">Borrar todo</string>
     <string name="load_template">Cargar plantilla</string>
     <string name="export_to">Exportar a</string>
-    <string name="export_to_pdf">.pdf</string>
-    <string name="export_to_docx">.docx</string>
-    <string name="export_to_csv">.csv</string>
-    <string name="export_to_txt">.txt</string>
+    <string name="export_to_pdf">PDF</string>
+    <string name="export_to_docx">Word</string>
+    <string name="export_to_csv">Excel</string>
+    <string name="export_to_txt">TXT</string>
     <string name="settings">Configuraciones</string>
     <string name="about">Acerca de</string>
 
@@ -47,7 +47,7 @@
     <string name="template_label">Nombre de la plantilla</string>
 
     <!-- About -->
-    <string name="description">Este proyecto está enfocado en la transcripción de voz a texto, adicionalmente con la capacidad de rellenar formularios personalizables.</string>
+    <string name="description">Este proyecto está enfocado en la transcripción de voz a texto, adicionalmente con la capacidad de rellenar formularios personalizables y exportarlos a varios formatos.</string>
     <string name="version">Versión: %1$s</string>
     <string name="developer">Desarrollador: https://github.com/jahirxtrap</string>
     <string name="web_developer">Desarrollador web: https://github.com/DiegoFernandoLojanTN</string>

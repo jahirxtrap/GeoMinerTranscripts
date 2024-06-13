@@ -1,0 +1,23 @@
+{
+    "label": "Plantilla de Afloramiento",
+    "data": {
+        "Responsable": "",
+        "Número de Afloramiento": "",
+        "Carta Topológica": "",
+        "Provincia": "",
+	"Cantón": "",
+	"Parroquia": "",
+	"Sector": "",
+	"DATUM": "",
+	"Localización X": "",
+	"Localización Y": "",
+	"Localización Z": "",
+	"Tipo de Afloramiento": "",
+	"Largo": "",
+	"Ancho": "",
+	"Tipo de Roca": "",
+	"Meteorización": "",
+	"Datos estructurales": "",
+	"Descripción": ""
+    }
+}
