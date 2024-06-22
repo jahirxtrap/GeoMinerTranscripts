@@ -13,7 +13,7 @@
     <string name="export_to">Exportar a</string>
     <string name="export_to_pdf">PDF</string>
     <string name="export_to_docx">Word</string>
-    <string name="export_to_csv">Excel</string>
+    <string name="export_to_xlsx">Excel</string>
     <string name="export_to_txt">TXT</string>
     <string name="settings">Configuraciones</string>
     <string name="about">Acerca de</string>

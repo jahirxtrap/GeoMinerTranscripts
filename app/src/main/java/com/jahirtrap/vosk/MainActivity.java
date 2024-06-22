@@ -49,6 +49,10 @@ import com.itextpdf.layout.property.UnitValue;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
 import org.apache.poi.xwpf.usermodel.XWPFParagraph;
 import org.apache.poi.xwpf.usermodel.XWPFRun;
@@ -89,6 +93,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
 public class MainActivity extends AppCompatActivity implements RecognitionListener {
@@ -240,7 +245,7 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                 exportTo(format);
                 return true;
             case 106:
-                format = "csv";
+                format = "xlsx";
                 exportTo(format);
                 return true;
             case 107:
@@ -303,11 +308,11 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     createDocxForBelowAndroid10(label);
                 }
                 break;
-            case "csv":
+            case "xlsx":
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    createCsvForAndroid10AndAbove(label);
+                    createXlsxForAndroid10AndAbove(label);
                 } else {
-                    createCsvForBelowAndroid10(label);
+                    createXlsxForBelowAndroid10(label);
                 }
                 break;
             case "txt":
@@ -507,19 +512,20 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         run.setText(text);
     }
 
-    private void createCsvForAndroid10AndAbove(String label) {
+    private void createXlsxForAndroid10AndAbove(String label) {
         ContentValues contentValues = new ContentValues();
-        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, label + ".csv");
-        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "text/csv");
+        contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME, label + ".xlsx");
+        contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Documents/");
 
         try {
             Uri uri = getContentResolver().insert(MediaStore.Files.getContentUri("external"), contentValues);
             if (uri != null) {
-                try (OutputStream outputStream = getContentResolver().openOutputStream(uri);
-                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
-                    writeCsvContent(writer, label);
-                    showToast((String) this.getResources().getText(R.string.export_success));
+                try (OutputStream outputStream = getContentResolver().openOutputStream(uri)) {
+                    if (outputStream != null) {
+                        writeXlsxContent(outputStream, label);
+                        showToast((String) this.getResources().getText(R.string.export_success));
+                    }
                 }
             } else {
                 showToast((String) this.getResources().getText(R.string.export_error));
@@ -530,13 +536,13 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
-    private void createCsvForBelowAndroid10(String label) {
-        File csvDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
-        if (!csvDir.exists()) return;
+    private void createXlsxForBelowAndroid10(String label) {
+        File xlsxDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS);
+        if (!xlsxDir.exists()) return;
 
-        File csvFile = new File(csvDir, label + ".csv");
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(csvFile))) {
-            writeCsvContent(writer, label);
+        File xlsxFile = new File(xlsxDir, label + ".xlsx");
+        try (FileOutputStream outputStream = new FileOutputStream(xlsxFile)) {
+            writeXlsxContent(outputStream, label);
             showToast((String) this.getResources().getText(R.string.export_success));
         } catch (IOException e) {
             e.fillInStackTrace();
@@ -544,19 +550,31 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         }
     }
 
-    private void writeCsvContent(BufferedWriter writer, String label) throws IOException {
-        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT.withHeader(label));
+    private void writeXlsxContent(OutputStream outputStream, String label) throws IOException {
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet(label);
 
+        Row headerRow = sheet.createRow(0);
+        org.apache.poi.ss.usermodel.Cell headerCell1 = headerRow.createCell(0);
+        headerCell1.setCellValue(label);
+
+        int rowCount = 1;
         for (int i = 1; i < formContainer.getChildCount(); i++) {
             View child = formContainer.getChildAt(i);
             if (child instanceof EditText) {
                 String field = capitalizeFirstLetter(((EditText) child).getHint().toString());
                 String value = capitalizeFirstLetter(((EditText) child).getText().toString().trim());
-                csvPrinter.printRecord(field, value);
+
+                Row row = sheet.createRow(rowCount++);
+                org.apache.poi.ss.usermodel.Cell cell1 = row.createCell(0);
+                cell1.setCellValue(field);
+                org.apache.poi.ss.usermodel.Cell cell2 = row.createCell(1);
+                cell2.setCellValue(value);
             }
         }
 
-        csvPrinter.flush();
+        workbook.write(outputStream);
+        workbook.close();
     }
 
     private void createTxtForAndroid10AndAbove(String label) {
@@ -649,6 +667,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
         } else {
             generateFormFromPreferencesOrAssets(templateName + ".json", true);
         }
+
+        addFocusChangeListener();
     }
 
     private void generateFormFromPreferencesOrAssets(String source, boolean isAsset) {
@@ -685,6 +705,16 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
             }
         } catch (JSONException e) {
             e.fillInStackTrace();
+        }
+    }
+
+    private void addFocusChangeListener() {
+        for (EditText editText : editTextMap.values()) {
+            editText.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus) {
+                    currentEditText = editText;
+                }
+            });
         }
     }
 
@@ -778,8 +808,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     } else {
                         int index = getIndex();
                         if (index != -1) {
-                            //String value = textToNumber(normalizedText);
-                            resultP.set(index, result.get(index) + normalizedText + " ");
+                            String value = textToNumber(normalizedText);
+                            resultP.set(index, result.get(index) + value + " ");
                             fillText(resultP);
                         }
                     }
@@ -809,8 +839,8 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
                     } else {
                         int index = getIndex();
                         if (index != -1) {
-                            //String value = textToNumber(normalizedText);
-                            result.set(index, result.get(index) + normalizedText + " ");
+                            String value = textToNumber(normalizedText);
+                            result.set(index, result.get(index) + value + " ");
                             resultP.set(index, result.get(index));
                             fillText(resultP);
                         }
@@ -848,45 +878,80 @@ public class MainActivity extends AppCompatActivity implements RecognitionListen
 
     private static String textToNumber(String text) {
         HashMap<String, Integer> mapNumber = getStringIntegerHashMap();
-
-        int total = 0;
-        int current = 0;
-        int lastMil = 0;
-        boolean foundNumber = false;
+        StringTokenizer tokenizer = new StringTokenizer(text);
+        StringBuilder result = new StringBuilder();
+        int currentNumber = 0;
+        int finalNumber = 0;
+        boolean numberFound = false;
+        boolean isPreviousWordNumber = false;
         boolean isNegative = false;
 
-        String[] palabras = text.split("\\s+");
-        for (String palabra : palabras) {
-            if (palabra.equals("menos")) {
-                isNegative = true;
-            } else if (mapNumber.containsKey(palabra)) {
-                foundNumber = true;
-                int valor = mapNumber.get(palabra);
-                if (valor == 1000) {
-                    if (current == 0) current = 1;
-                    lastMil += current * 1000;
-                    current = 0;
-                } else if (valor == 1000000) {
-                    if (current == 0) current = 1;
-                    total += (lastMil + current) * 1000000;
-                    lastMil = 0;
-                    current = 0;
-                } else if (valor >= 100) {
-                    current *= valor;
+        while (tokenizer.hasMoreTokens()) {
+            String word = tokenizer.nextToken();
+
+            if (word.equals("menos")) {
+                if (tokenizer.hasMoreTokens()) {
+                    String nextWord = tokenizer.nextToken();
+                    if (mapNumber.containsKey(nextWord)) {
+                        isNegative = true;
+                        word = nextWord;
+                    } else {
+                        result.append("menos ").append(nextWord).append(" ");
+                        continue;
+                    }
                 } else {
-                    current += valor;
+                    result.append("menos ");
+                    continue;
                 }
+            }
+
+            if (word.equals("y") && isPreviousWordNumber) {
+                continue;
+            }
+
+            if (mapNumber.containsKey(word)) {
+                int value = mapNumber.get(word);
+                numberFound = true;
+                isPreviousWordNumber = true;
+
+                if (value == 1000 || value == 1000000) {
+                    if (currentNumber == 0) {
+                        currentNumber = 1;
+                    }
+                    currentNumber *= value;
+                    finalNumber += currentNumber;
+                    currentNumber = 0;
+                } else if (value == 100 && currentNumber != 0) {
+                    currentNumber *= value;
+                } else {
+                    currentNumber += value;
+                }
+            } else {
+                if (numberFound) {
+                    finalNumber += currentNumber;
+                    if (isNegative) {
+                        finalNumber *= -1;
+                        isNegative = false;
+                    }
+                    result.append(finalNumber).append(" ");
+                    finalNumber = 0;
+                    currentNumber = 0;
+                    numberFound = false;
+                }
+                result.append(word).append(" ");
+                isPreviousWordNumber = false;
             }
         }
 
-        if (!foundNumber) return text;
-
-        total += lastMil + current;
-        if (isNegative) {
-            total = -total;
+        if (numberFound) {
+            finalNumber += currentNumber;
+            if (isNegative) {
+                finalNumber *= -1;
+            }
+            result.append(finalNumber);
         }
 
-        return String.valueOf(total);
+        return result.toString().trim();
     }
 
     @NonNull

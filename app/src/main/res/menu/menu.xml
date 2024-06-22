@@ -29,9 +29,9 @@
                 android:orderInCategory="105"
                 android:title="@string/export_to_docx" />
             <item
-                android:id="@+id/action_export_csv"
+                android:id="@+id/action_export_xlsx"
                 android:orderInCategory="106"
-                android:title="@string/export_to_csv" />
+                android:title="@string/export_to_xlsx" />
             <item
                 android:id="@+id/action_export_txt"
                 android:orderInCategory="107"
